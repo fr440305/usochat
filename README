@@ -20,5 +20,23 @@ Chinese.
 Also, in Japanese, `U-So` means `lie`. It can remind us that what people 
 says in these kind of social networking application is usually not trust-
 worthy.
+______________________________
 
-珍爱生命，远离社交软件。
+*Project Structure:
+
+# (front-end)
+	- api.js
+		{} Api
+			{} Theard
+			{} Client
+	- app.js
+		{} App
+	- index.html
+# (back-end)
+	- uso.go
+
+`#` means a conceptual node, and ` - ` means an entity (existist file). 
+`{}` means class or type ( in javascript, an object's constructor is
+equivelent to class, and in go, `{}` means type), and `()` means a method
+of that class.
+

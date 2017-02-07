@@ -15,6 +15,9 @@ function client() {
 	this.ajax = new XMLHttpRequest();
 }
 
+client.prototype.AddListenerOnReadyStateChange = function(callback) {
+}
+
 client.prototype.Post = function (url, post_content) {
 }
 

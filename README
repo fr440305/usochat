@@ -25,15 +25,15 @@ ______________________________
 *Project Structure:
 
 # (front-end)
-	- api.js
-		{} Api
-			{} Theard
-			{} Client
-	- app.js
-		{} App
-	- index.html
+..- api.js
+....{} Api
+......{} Theard
+......{} Client
+..- app.js
+....{} App
+..- index.html
 # (back-end)
-	- uso.go
+..- uso.go
 
 `#` means a conceptual node, and ` - ` means an entity (existist file). 
 `{}` means class or type ( in javascript, an object's constructor is

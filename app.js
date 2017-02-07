@@ -10,7 +10,7 @@ function eventer () {
 function App () {
 	this.UI = new ui();
 	this.Eventer = new eventer();
-	this.stat = [this.Const('stat-list')[0], 0];
+	this.stat = [this.Const('stat-list')[0], 0]; // the first zero is for the parent-status //
 }
 
 App.prototype.Const = function (const_name) {

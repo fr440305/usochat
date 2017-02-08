@@ -54,20 +54,34 @@ func main() {
 	http.HandleFunc("/app.js", MapFile("app.js"))
 	http.HandleFunc("/api.js", MapFile("api.js"))
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
 		/* for testing */
 		/* TODO - handle query */
 		fmt.Println("<!--get")
 		fmt.Println("  Method = ", r.Method)
 		fmt.Println("  RawQuery = ", r.URL.RawQuery)
+		for d, r := range r.Form {
+			fmt.Println("  Form[", d, "] |-> ", r)
+		}
+		for d, r := range r.PostForm {
+			fmt.Println("  PostForm[", d, "] |-> ", r)
+		}
 		fmt.Println("-->")
 	})
 	http.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
 		/* for testing */
 		fmt.Println("<!--post")
 		if r.Method == "POST" {
 			fmt.Println("  Method = ", r.Method, ", normal")
 		} else {
 			fmt.Println("  Method = ", r.Method, ", ALERT!")
+		}
+		for d, r := range r.Form {
+			fmt.Println("  Form[", d, "] |-> ", r)
+		}
+		for d, r := range r.PostForm {
+			fmt.Println("  PostForm[", d, "] |-> ", r)
 		}
 		fmt.Println("-->")
 	})

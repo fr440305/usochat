@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 func MapFile(file_name string) func(http.ResponseWriter, *http.Request) {
@@ -49,6 +50,7 @@ func MapFile(file_name string) func(http.ResponseWriter, *http.Request) {
 }
 
 func main() {
+	var dialogs []string
 	http.HandleFunc("/", MapFile(""))
 	http.HandleFunc("/index.html", MapFile("index.html"))
 	http.HandleFunc("/app.js", MapFile("app.js"))
@@ -56,16 +58,24 @@ func main() {
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		/* for testing */
-		/* TODO - handle query */
 		fmt.Println("<!--get")
 		fmt.Println("  Method = ", r.Method)
 		fmt.Println("  RawQuery = ", r.URL.RawQuery)
 		for d, r := range r.Form {
 			fmt.Println("  Form[", d, "] |-> ", r)
+			if d == "conversation" {
+				fmt.Println("  conversation:")
+				for index, diaelm := range dialogs {
+					/* TODO - Write a response of json to show the dialogs to clients. */
+					fmt.Println("    dialog[", index, "] = ", diaelm)
+				}
+			}
 		}
-		for d, r := range r.PostForm {
-			fmt.Println("  PostForm[", d, "] |-> ", r)
-		}
+		/*
+			for d, r := range r.PostForm {
+				fmt.Println("  PostForm[", d, "] |-> ", r)
+			}
+		*/
 		fmt.Println("-->")
 	})
 	http.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
@@ -77,11 +87,16 @@ func main() {
 		} else {
 			fmt.Println("  Method = ", r.Method, ", ALERT!")
 		}
-		for d, r := range r.Form {
-			fmt.Println("  Form[", d, "] |-> ", r)
-		}
-		for d, r := range r.PostForm {
-			fmt.Println("  PostForm[", d, "] |-> ", r)
+		/*
+			for d, r := range r.Form {
+				fmt.Println("  Form[", d, "] |-> ", r)
+			}
+		*/
+		for k, v := range r.PostForm {
+			fmt.Println("  PostForm[", k, "] |-> ", v)
+			if k == "dialog" {
+				dialogs = append(dialogs, strings.Join(v, ""))
+			}
 		}
 		fmt.Println("-->")
 	})

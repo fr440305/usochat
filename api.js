@@ -2,7 +2,7 @@
  * author - firerain *
  */
 
-function Api() {
+function API() {
 	this.Theard = new theard();
 	this.Client = new client();
 }

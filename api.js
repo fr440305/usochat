@@ -12,6 +12,7 @@ function theard() {
 
 function client() {
 	this.id = undefined;
+	this.stat = undefined;
 	this.ajax = new XMLHttpRequest();
 	this.get_url = "get";
 	this.post_url = "post";
@@ -20,7 +21,7 @@ function client() {
 client.prototype.AddEventListener = function(event_name, callback) {
 	if (event_name === "onreadystatechange" ) {
 		var Me = this;
-		this.ajax.addEventListener("onreadystatechanged", function(){callback(/*we can add some extra parameters here */)}, true);
+		this.ajax.addEventListener("onreadystatechange", function(){callback(/*we can add some extra parameters here */)}, true);
 	}
 }
 
@@ -28,8 +29,12 @@ client.prototype.Say = function (dialog) {
 	this.post("dialog=" + dialog);
 }
 
-client.prototype.GetConversation = function () {
+client.prototype.SendGettingQuery = function () {
 	this.get("conversation");
+}
+
+client.prototype.GetDialogJson = function () {
+	return this.ajax.responseText;
 }
 
 client.prototype.post = function (post_content) {

@@ -20,6 +20,5 @@ App.prototype.Const = function (const_name) {
 }
 
 App.prototype.looper = function () {
-
 }
 

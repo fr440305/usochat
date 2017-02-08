@@ -15,7 +15,11 @@ function client() {
 	this.ajax = new XMLHttpRequest();
 }
 
-client.prototype.AddListenerOnReadyStateChange = function(callback) {
+client.prototype.AddEventListener = function(event_name, callback) {
+	if (event_name === "onreadystatechange" ) {
+		var Me = this;
+		this.ajax.addEventListener("onreadystatechanged", function(){callback(/*we can add some extra parameters here */)}, true);
+	}
 }
 
 client.prototype.Post = function (url, post_content) {

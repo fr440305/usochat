@@ -55,6 +55,7 @@ func main() {
 	http.HandleFunc("/api.js", MapFile("api.js"))
 	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
 		/* for testing */
+		/* TODO - handle query */
 		fmt.Println("<!--get")
 		fmt.Println("  Method = ", r.Method)
 		fmt.Println("  RawQuery = ", r.URL.RawQuery)

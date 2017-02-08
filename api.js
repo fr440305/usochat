@@ -24,14 +24,22 @@ client.prototype.AddEventListener = function(event_name, callback) {
 	}
 }
 
-client.prototype.Post = function (post_content) {
+client.prototype.Say = function (dialog) {
+	this.post("dialog=" + dialog);
+}
+
+client.prototype.GetConversation = function () {
+	this.get("conversation");
+}
+
+client.prototype.post = function (post_content) {
 	/* post_content : string = \" post_key \= post_value [{ \& post_key \= post_value }] \" */
 	this.ajax.open("POST", this.post_url, true);
 	this.ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	this.ajax.send(post_content);
 }
 
-client.prototype.Get = function (get_req_content) {
+client.prototype.get = function (get_req_content) {
 	/* get_req_content : string = \" get_req_key \= get_req_value [{ \& get_req_key \= get_req_value }] \" */
 	this.ajax.open("GET", this.get_url + '?' + get_req_content, true);
 	this.ajax.send();

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
+
+var dialogs []string
 
 func MapFile(file_name string) func(http.ResponseWriter, *http.Request) {
 	if file_name == "" {
@@ -49,57 +52,70 @@ func MapFile(file_name string) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+func GetHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	/* for testing */
+	fmt.Println("<!--get")
+	fmt.Println("  Method = ", r.Method)
+	fmt.Println("  RawQuery = ", r.URL.RawQuery)
+	for d, r := range r.Form {
+		fmt.Println("  Form[", d, "] |-> ", r)
+		if d == "conversation" {
+			fmt.Println("  conversation:")
+			/* TODO - pretend XSS attack, pay attention to security */
+			resp_json, err := json.Marshal(dialogs)
+			if err != nil {
+				fmt.Println("http-get-Fatal!!-json.Marshal")
+				return
+			} else {
+				w.Header().Set("Content-Type", "text/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write(resp_json)
+			}
+			for index, diaelm := range dialogs {
+				fmt.Println("    dialog[", index, "] = ", diaelm)
+			}
+		}
+	}
+	/*
+		for d, r := range r.PostForm {
+			fmt.Println("  PostForm[", d, "] |-> ", r)
+		}
+	*/
+	fmt.Println("-->")
+}
+
+func PostHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	/* for testing */
+	fmt.Println("<!--post")
+	if r.Method == "POST" {
+		fmt.Println("  Method = ", r.Method, ", normal")
+	} else {
+		fmt.Println("  Method = ", r.Method, ", ALERT!")
+	}
+	/*
+		for d, r := range r.Form {
+			fmt.Println("  Form[", d, "] |-> ", r)
+		}
+	*/
+	for k, v := range r.PostForm {
+		fmt.Println("  PostForm[", k, "] |-> ", v)
+		if k == "dialog" {
+			dialogs = append(dialogs, strings.Join(v, ""))
+		}
+	}
+	fmt.Println("-->")
+}
+
 func main() {
-	var dialogs []string
+	/* File Server */
 	http.HandleFunc("/", MapFile(""))
 	http.HandleFunc("/index.html", MapFile("index.html"))
 	http.HandleFunc("/app.js", MapFile("app.js"))
 	http.HandleFunc("/api.js", MapFile("api.js"))
-	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		/* for testing */
-		fmt.Println("<!--get")
-		fmt.Println("  Method = ", r.Method)
-		fmt.Println("  RawQuery = ", r.URL.RawQuery)
-		for d, r := range r.Form {
-			fmt.Println("  Form[", d, "] |-> ", r)
-			if d == "conversation" {
-				fmt.Println("  conversation:")
-				for index, diaelm := range dialogs {
-					/* TODO - Write a response of json to show the dialogs to clients. */
-					fmt.Println("    dialog[", index, "] = ", diaelm)
-				}
-			}
-		}
-		/*
-			for d, r := range r.PostForm {
-				fmt.Println("  PostForm[", d, "] |-> ", r)
-			}
-		*/
-		fmt.Println("-->")
-	})
-	http.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		/* for testing */
-		fmt.Println("<!--post")
-		if r.Method == "POST" {
-			fmt.Println("  Method = ", r.Method, ", normal")
-		} else {
-			fmt.Println("  Method = ", r.Method, ", ALERT!")
-		}
-		/*
-			for d, r := range r.Form {
-				fmt.Println("  Form[", d, "] |-> ", r)
-			}
-		*/
-		for k, v := range r.PostForm {
-			fmt.Println("  PostForm[", k, "] |-> ", v)
-			if k == "dialog" {
-				dialogs = append(dialogs, strings.Join(v, ""))
-			}
-		}
-		fmt.Println("-->")
-	})
+	http.HandleFunc("/get", GetHandler)
+	http.HandleFunc("/post", PostHandler)
 	http.ListenAndServe(":8080", nil)
 	fmt.Println("vim-go")
 }

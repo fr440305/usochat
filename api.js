@@ -21,6 +21,8 @@ function client() {
 client.prototype.Var = function(property) {
 	/* accessor pattern */
 	return {
+		"http-status": this.ajax.status,
+		"http-readystate": this.ajax.readystate,
 		"dialog-json": this.ajax.responseText
 	}[property];
 }
@@ -29,7 +31,7 @@ client.prototype.Say = function (dialog) {
 	this.post("dialog=" + dialog);
 }
 
-client.prototype.SendGettingQuery = function () {
+client.prototype.FetchConversation = function () {
 	this.get("conversation");
 }
 

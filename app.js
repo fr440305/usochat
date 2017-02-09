@@ -8,6 +8,9 @@ var $api = new API();
 function ui () {
 }
 
+ui.prototype.AddDialog = function (dialog_json) {
+}
+
 function eventer () {
 }
 

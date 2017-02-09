@@ -16,22 +16,13 @@ function client() {
 	this.ajax = new XMLHttpRequest();
 	this.get_url = "get";
 	this.post_url = "post";
-	this.listen(); /* only for test */
 }
 
-client.prototype.listen = function() {
-	var Me = this;
-	this.ajax.onreadystatechange = function(){
-		//alert('123');
-		console.log(Me.GetDialogJson())
-	};
-}
-
-client.prototype.AddEventListener = function(event_name, callback) {
-	if (event_name === "onreadystatechange" ) {
-		var Me = this;
-		this.ajax.addEventListener("onreadystatechange", function(){callback(/*we can add some extra parameters here */)}, true);
-	}
+client.prototype.Var = function(property) {
+	/* accessor pattern */
+	return {
+		"dialog-json": this.ajax.responseText
+	}[property];
 }
 
 client.prototype.Say = function (dialog) {
@@ -40,10 +31,6 @@ client.prototype.Say = function (dialog) {
 
 client.prototype.SendGettingQuery = function () {
 	this.get("conversation");
-}
-
-client.prototype.GetDialogJson = function () {
-	return this.ajax.responseText;
 }
 
 client.prototype.post = function (post_content) {

@@ -27,6 +27,13 @@ client.prototype.Var = function(property) {
 	}[property];
 }
 
+client.prototype.Const = function (key) {
+	return ({
+		"stat-initialize": 0,
+		"stat-after-init": 1
+	}[name]);
+}
+
 client.prototype.Say = function (dialog) {
 	this.post("dialog=" + dialog);
 }
@@ -42,10 +49,15 @@ client.prototype.post = function (post_content) {
 	this.ajax.send(post_content);
 }
 
+client.fetchId = function () {
+	this.get("initid");
+}
+
 client.prototype.get = function (get_req_content) {
 	/* get_req_content : string = \" get_req_key \= get_req_value [{ \& get_req_key \= get_req_value }] \" */
 	this.ajax.open("GET", this.get_url + '?' + get_req_content, true);
 	this.ajax.send();
 }
 
-
+client.prototype.statWriter = function () {
+}

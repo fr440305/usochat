@@ -1,6 +1,10 @@
 /* app.js *
  * author - firerain *
  */
+
+/* import api.js in var::$api */
+var $api = new API();
+
 function ui () {
 }
 

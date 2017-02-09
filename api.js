@@ -22,7 +22,7 @@ client.prototype.Var = function(property) {
 	/* accessor pattern */
 	return {
 		"http-status": this.ajax.status,
-		"http-readystate": this.ajax.readystate,
+		"http-readystate": this.ajax.readyState,
 		"dialog-json": this.ajax.responseText
 	}[property];
 }

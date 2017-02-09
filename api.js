@@ -16,6 +16,15 @@ function client() {
 	this.ajax = new XMLHttpRequest();
 	this.get_url = "get";
 	this.post_url = "post";
+	this.listen(); /* only for test */
+}
+
+client.prototype.listen = function() {
+	var Me = this;
+	this.ajax.onreadystatechange = function(){
+		//alert('123');
+		console.log(Me.GetDialogJson())
+	};
 }
 
 client.prototype.AddEventListener = function(event_name, callback) {

@@ -77,11 +77,6 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	/*
-		for d, r := range r.PostForm {
-			fmt.Println("  PostForm[", d, "] |-> ", r)
-		}
-	*/
 	fmt.Println("-->")
 }
 
@@ -94,11 +89,6 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Println("  Method = ", r.Method, ", ALERT!")
 	}
-	/*
-		for d, r := range r.Form {
-			fmt.Println("  Form[", d, "] |-> ", r)
-		}
-	*/
 	for k, v := range r.PostForm {
 		fmt.Println("  PostForm[", k, "] |-> ", v)
 		if k == "dialog" {

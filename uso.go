@@ -67,11 +67,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				fmt.Println("http-get-Fatal!!-json.Marshal")
 				return
-			} else {
-				w.Header().Set("Content-Type", "text/json")
-				w.WriteHeader(http.StatusOK)
-				w.Write(resp_json)
 			}
+			w.Header().Set("Content-Type", "text/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write(resp_json)
 			for index, diaelm := range dialogs {
 				fmt.Println("    dialog[", index, "] = ", diaelm)
 			}

@@ -25,7 +25,7 @@ function client() {
 			//console.log(Me.dialogs);
 		}
 	}
-	setInterval(function(){Me.FetchConversation()}, 500, true);
+	setInterval(function(){Me.fetchConversation()}, 500, true);
 }
 
 client.prototype.Var = function(property) {
@@ -44,8 +44,8 @@ client.prototype.Say = function (dialog) {
 	this.post({"dialog" : dialog});
 }
 
-client.prototype.FetchConversation = function () {
-	this.get({"conversation":""});
+client.prototype.fetchConversation = function () {
+	this.get({"conversation":"-"});
 }
 
 client.prototype.post = function (post_object) {
@@ -54,7 +54,7 @@ client.prototype.post = function (post_object) {
 	for (var key_index = 0; key_index < keys.length; key_index++) {
 		var k = keys[key_index];
 		var v = post_object[k].toString();
-		post_string_array.push(k.toString() + (v==='')?'':'=' + v + '&'); /* if v is empty then the equal sign should not be written. */
+		post_string_array.push(k.toString() + '=' + v + '&'); /* if v is empty then the equal sign should not be written. */
 	}
 	var post_string = post_string_array.join(''); /* .slice(0, -1) */
 	post_string = post_string.substring(0, post_string.length - 1);
@@ -73,7 +73,7 @@ client.prototype.get = function (get_object) {
 	for (var key_index = 0; key_index < keys.length; key_index++) {
 		var k = keys[key_index];
 		var v = get_object[k].toString();
-		get_string_array.push(k.toString() + (v==='')?'':'=' + v + '&');
+		get_string_array.push(k.toString() + '=' + v + '&');
 	}
 	var get_string = get_string_array.join(''); /* .slice(0, -1) */
 	get_string = get_string.substring(0, get_string.length - 1);

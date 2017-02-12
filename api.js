@@ -28,6 +28,7 @@ client.prototype.Var = function(property) {
 }
 
 client.prototype.Const = function (key) {
+	/* only offer the constants which will be used by other object(s) */
 	return ({
 		"stat-initialize": 0,
 		"stat-after-init": 1
@@ -35,15 +36,15 @@ client.prototype.Const = function (key) {
 }
 
 client.prototype.Say = function (dialog) {
-	this.post("dialog=" + dialog);
+	this.post({"dialog" : dialog});
 }
 
 client.prototype.FetchConversation = function () {
 	this.get("conversation");
 }
 
-client.prototype.post = function (post_content) {
-	/* post_content : string = \" post_key \= post_value [{ \& post_key \= post_value }] \" */
+client.prototype.post = function (post_object) {
+	var post_content;
 	this.ajax.open("POST", this.post_url, true);
 	this.ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	this.ajax.send(post_content);

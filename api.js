@@ -22,7 +22,7 @@ function client() {
 		//console.log('qweqwe');
 		if (Me.ajax.readyState === 4) {
 			Me.dialogs = Me.ajax.responseText;
-			console.log(Me.dialogs);
+			//console.log(Me.dialogs);
 		}
 	}
 	setInterval(function(){Me.FetchConversation()}, 500, true);
@@ -54,7 +54,7 @@ client.prototype.post = function (post_object) {
 	for (var key_index = 0; key_index < keys.length; key_index++) {
 		var k = keys[key_index];
 		var v = post_object[k].toString();
-		post_string_array.push(k.toString() + '=' + v + '&');
+		post_string_array.push(k.toString() + (v==='')?'':'=' + v + '&'); /* if v is empty then the equal sign should not be written. */
 	}
 	var post_string = post_string_array.join(''); /* .slice(0, -1) */
 	post_string = post_string.substring(0, post_string.length - 1);
@@ -73,7 +73,7 @@ client.prototype.get = function (get_object) {
 	for (var key_index = 0; key_index < keys.length; key_index++) {
 		var k = keys[key_index];
 		var v = get_object[k].toString();
-		get_string_array.push(k.toString() + '=' + v + '&');
+		get_string_array.push(k.toString() + (v==='')?'':'=' + v + '&');
 	}
 	var get_string = get_string_array.join(''); /* .slice(0, -1) */
 	get_string = get_string.substring(0, get_string.length - 1);

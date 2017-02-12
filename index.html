@@ -10,9 +10,18 @@
 		<title> uso - A simple chatting online webpage </title>
 	</head>
 	<body>
-		<div id='-uso-'></div>
+		<div id='ui'>
+			<div id='-uso-'></div>
+			<input type='text' id='say'></input>
+			<div id='sender' style='width:50px;height:50px;background-color:black'></div>
+		</div>
 		<script type='text/javascript' src='api.js'> </script>
 		<script type='text/javascript' src='app.js'> </script>
+		<script>
+			document.getElementById('sender').onclick = function () {
+				$api.Client.Say(document.getElementById('say').value);
+			}
+		</script>
 	</body>
 </html>
 

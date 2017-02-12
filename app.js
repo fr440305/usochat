@@ -6,7 +6,7 @@
 var $api = new API();
 
 setInterval(function(){
-	document.getElementById('-uso-').innerHTML = $api.Client.dialogs;
+	document.getElementById('-uso-').innerHTML = $api.Client.Var("dialogs");
 	//console.log($api.Client.dialogs);
 }, 1000, true);
 

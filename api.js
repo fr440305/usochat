@@ -28,9 +28,11 @@ function client() {
 	setInterval(function(){Me.fetchConversation()}, 500, true);
 }
 
-client.prototype.Var = function(property) {
+client.prototype.Var = function(v_name) {
 	/* accessor pattern */
-	return this.dialogs;
+	if (v_name === "dialogs") { 
+		return this.dialogs;
+	}
 	/*
 	return {
 		"http-status": this.ajax.status,

@@ -12,27 +12,32 @@ function theard() {
 
 function client() {
 	this.id = undefined;
+	this.dialogs = undefined;
 	this.stat = undefined;
 	this.ajax = new XMLHttpRequest();
 	this.get_url = "get";
 	this.post_url = "post";
+	var Me = this;
+	this.ajax.onreadystatechange = function() {
+		//console.log('qweqwe');
+		if (Me.ajax.readyState === 4) {
+			Me.dialogs = Me.ajax.responseText;
+			console.log(Me.dialogs);
+		}
+	}
+	setInterval(function(){Me.FetchConversation()}, 500, true);
 }
 
 client.prototype.Var = function(property) {
 	/* accessor pattern */
+	return this.dialogs;
+	/*
 	return {
 		"http-status": this.ajax.status,
 		"http-readystate": this.ajax.readyState,
 		"dialog-json": this.ajax.responseText
 	}[property];
-}
-
-client.prototype.Const = function (key) {
-	/* only offer the constants which will be used by other object(s) */
-	return ({
-		"stat-initialize": 0,
-		"stat-after-init": 1
-	}[name]);
+	*/
 }
 
 client.prototype.Say = function (dialog) {
@@ -40,23 +45,40 @@ client.prototype.Say = function (dialog) {
 }
 
 client.prototype.FetchConversation = function () {
-	this.get("conversation");
+	this.get({"conversation":""});
 }
 
 client.prototype.post = function (post_object) {
-	var post_content;
+	var post_string_array = [];
+	var keys = Object.keys(post_object);
+	for (var key_index = 0; key_index < keys.length; key_index++) {
+		var k = keys[key_index];
+		var v = post_object[k].toString();
+		post_string_array.push(k.toString() + '=' + v + '&');
+	}
+	var post_string = post_string_array.join(''); /* .slice(0, -1) */
+	post_string = post_string.substring(0, post_string.length - 1);
 	this.ajax.open("POST", this.post_url, true);
 	this.ajax.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	this.ajax.send(post_content);
+	this.ajax.send(post_string);
 }
 
 client.fetchId = function () {
-	this.get("initid");
+	this.get({"initid":""});
 }
 
-client.prototype.get = function (get_req_content) {
+client.prototype.get = function (get_object) {
+	var get_string_array = [];
+	var keys = Object.keys(get_object);
+	for (var key_index = 0; key_index < keys.length; key_index++) {
+		var k = keys[key_index];
+		var v = get_object[k].toString();
+		get_string_array.push(k.toString() + '=' + v + '&');
+	}
+	var get_string = get_string_array.join(''); /* .slice(0, -1) */
+	get_string = get_string.substring(0, get_string.length - 1);
 	/* get_req_content : string = \" get_req_key \= get_req_value [{ \& get_req_key \= get_req_value }] \" */
-	this.ajax.open("GET", this.get_url + '?' + get_req_content, true);
+	this.ajax.open("GET", this.get_url + '?' + get_string, true);
 	this.ajax.send();
 }
 

@@ -20,6 +20,7 @@
 		<script>
 			document.getElementById('sender').onclick = function () {
 				$api.Client.Say(document.getElementById('say').value);
+				document.getElementById("say").value = '';
 			}
 		</script>
 	</body>

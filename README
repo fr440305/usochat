@@ -27,10 +27,9 @@ ______________________________
 # (front-end)
 ..- api.js
 ....{} Api
-......{} Theard
 ......{} Client
 ..- app.js
-....{} App
+....{} ui
 ..- index.html
 # (back-end)
 ..- uso.go

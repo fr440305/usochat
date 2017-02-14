@@ -30,8 +30,9 @@ function client() {
 
 client.prototype.Var = function(v_name) {
 	/* accessor pattern */
+	var dia = this.dialogs;
 	if (v_name === "dialogs") { 
-		return JSON.parse(this.dialogs);
+		return (dia === "null" || dia === undefined || dia === "undefined") ? [] : JSON.parse(this.dialogs);
 	}
 	/*
 	return {

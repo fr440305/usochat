@@ -15,6 +15,7 @@ function client() {
 	this.dialogs = undefined;
 	this.stat = undefined;
 	this.ajax = new XMLHttpRequest();
+	this.post_queue = undefined;
 	this.get_url = "get";
 	this.post_url = "post";
 	var Me = this;
@@ -85,5 +86,8 @@ client.prototype.get = function (get_object) {
 	this.ajax.send();
 }
 
-client.prototype.statWriter = function () {
+client.prototype.looper = function () {
+	/* update the status, including post the dialogs in this.post_queue to server , *
+	 * fetch the conversations from server, *
+	 * and update properties of this object */
 }

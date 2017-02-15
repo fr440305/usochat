@@ -9,7 +9,7 @@ function app () {
 	this.UI = new ui();
 	this.req_interval = 250;
 	var Me = this;
-	setInterval(function(){
+	setInterval(function(){			/* TODO - implement this code by using $api.Theard() */
 		var dia_arr = $api.Client.Var("dialogs");
 		if (dia_arr.length !== Me.UI.Var("dia-node-length") ) {
 			Me.UI.ClearDiaNodes();
@@ -32,7 +32,7 @@ ui.prototype.AddDiaNode = function (dia_content) {
 }
 
 ui.prototype.ClearDiaNodes = function () {
-	this.dia_board.innerHTML = ''; /* not the best option. Need to be refactored */
+	this.dia_board.innerHTML = ''; /* TODO - not the best option. Need to be refactored */
 }
 
 ui.prototype.Var = function (key) {

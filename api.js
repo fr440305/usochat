@@ -15,7 +15,7 @@ function client() {
 	this.dialogs = undefined;
 	this.stat = undefined;
 	this.ajax = new XMLHttpRequest();
-	this.post_queue = undefined;
+	this.post_queue = undefined;		/* a string array for storing the dialogs that needed to be sent */
 	this.get_url = "get";
 	this.post_url = "post";
 	var Me = this;
@@ -45,7 +45,8 @@ client.prototype.Var = function(v_name) {
 }
 
 client.prototype.Say = function (dialog) {
-	this.post({"dialog" : dialog});
+	/* TODO - push this dialog to this.push_queue */
+	this.post({"dialog" : dialog});		
 }
 
 client.prototype.fetchConversation = function () {
@@ -68,7 +69,7 @@ client.prototype.post = function (post_object) {
 }
 
 client.fetchId = function () {
-	this.get({"initid":""});
+	this.get({"initid":"-"});
 }
 
 client.prototype.get = function (get_object) {
@@ -87,7 +88,7 @@ client.prototype.get = function (get_object) {
 }
 
 client.prototype.looper = function () {
-	/* update the status, including post the dialogs in this.post_queue to server , *
+	/* TODO - analyse and update the status, including post the dialogs in this.post_queue to server , *
 	 * fetch the conversations from server, *
 	 * and update properties of this object */
 }

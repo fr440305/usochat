@@ -72,8 +72,12 @@ func main() {
 	//http.HandleFunc("/get", GetHandler)
 	//http.HandleFunc("/post", PostHandler)
 
+	go func() {
+		log.Fatal(http.ListenAndServe(":8081", new(GetHandler)))
+	}()
+	go func() {
+		log.Fatal(http.ListenAndServe(":8082", new(PostHandler)))
+	}()
 	log.Fatal(http.ListenAndServe(":8080", http.FileServer(http.Dir("."))))
-	log.Fatal(http.ListenAndServe(":8081", new(GetHandler)))
-	log.Fatal(http.ListenAndServe(":8082", new(PostHandler)))
 	fmt.Println("vim-go")
 }

@@ -12,10 +12,7 @@ import (
 
 var dialogs []string
 
-type GetHandler struct {
-}
-
-func (GH GetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func GetHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	/* for testing */
 	fmt.Println("<!--get")
@@ -42,10 +39,7 @@ func (GH GetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("-->")
 }
 
-type PostHandler struct {
-}
-
-func (PH PostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func PostHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	/* for testing */
 	fmt.Println("<!--post")
@@ -63,21 +57,37 @@ func (PH PostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("-->")
 }
 
+type WebPg struct {
+}
+
+func (wpg WebPg) ServeHome() func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.Error(w, "File Not Found", 404)
+			return
+		}
+		if r.Method != "GET" {
+			http.Error(w, "Bad Access Method", 405)
+			return
+		}
+		http.ServeFile(w, r, "index.html")
+	})
+}
+
+func (wpg WebPg) ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+	})
+}
+
 func main() {
 	/* File Server */
-	//http.HandleFunc("/", MapFile(""))
-	//http.HandleFunc("/index.html", MapFile("index.html"))
-	//http.HandleFunc("/app.js", MapFile("app.js"))
-	//http.HandleFunc("/api.js", MapFile("api.js"))
-	//http.HandleFunc("/get", GetHandler)
-	//http.HandleFunc("/post", PostHandler)
+	http.HandleFunc("/", WebPg.ServeHome())
+	http.HandleFunc("/index.html", WebPg.ServeFile("index.html"))
+	http.HandleFunc("/app.js", WebPg.ServeFile("app.js"))
+	http.HandleFunc("/api.js", WebPg.ServeFile("api.js"))
+	http.HandleFunc("/get", GetHandler)
+	http.HandleFunc("/post", PostHandler)
 
-	go func() {
-		log.Fatal(http.ListenAndServe(":8081", new(GetHandler)))
-	}()
-	go func() {
-		log.Fatal(http.ListenAndServe(":8082", new(PostHandler)))
-	}()
-	log.Fatal(http.ListenAndServe(":8080", http.FileServer(http.Dir("."))))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 	fmt.Println("vim-go")
 }

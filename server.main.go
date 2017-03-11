@@ -1,14 +1,14 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"log"
 	//"io"
 	//"io/ioutil"
 	"github.com/gorilla/websocket"
 	"net/http"
-	"strings"
+	//"strings"
 )
 
 var dialogs []string
@@ -32,6 +32,25 @@ func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+}
+
+func (wpg WebPg) ServeHome() func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.Error(w, "File Not Found", 404)
+			return
+		}
+		if r.Method != "GET" {
+			http.Error(w, "Bad Access Method", 405)
+			return
+		}
+		http.ServeFile(w, r, "index.html")
+	})
+}
+
+func (wpg WebPg) ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
+	return (func(w http.ResponseWriter, r *http.Request) {
+	})
 }
 
 func main() {

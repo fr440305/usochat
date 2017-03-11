@@ -16,8 +16,8 @@ function client() {
 	this.stat = undefined;
 	this.ajax = new XMLHttpRequest();
 	this.post_queue = undefined;		/* a string array for storing the dialogs that needed to be sent */
-	this.get_url = "http://127.0.0.1:8081/get";
-	this.post_url = "http://127.0.0.1:8082/post";
+	this.get_url = "http://127.0.0.1:8888/get";
+	this.post_url = "http://127.0.0.1:8888/post";
 	var Me = this;
 	this.ajax.onreadystatechange = function() {
 		//console.log('qweqwe');

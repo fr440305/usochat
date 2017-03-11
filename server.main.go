@@ -57,37 +57,27 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("-->")
 }
 
-type WebPg struct {
-}
-
-func (wpg WebPg) ServeHome() func(http.ResponseWriter, *http.Request) {
+func ServeHome() func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.Error(w, "File Not Found", 404)
-			return
-		}
-		if r.Method != "GET" {
-			http.Error(w, "Bad Access Method", 405)
-			return
-		}
 		http.ServeFile(w, r, "index.html")
 	})
 }
 
-func (wpg WebPg) ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
+func ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filename)
 	})
 }
 
 func main() {
 	/* File Server */
-	http.HandleFunc("/", WebPg.ServeHome())
-	http.HandleFunc("/index.html", WebPg.ServeFile("index.html"))
-	http.HandleFunc("/app.js", WebPg.ServeFile("app.js"))
-	http.HandleFunc("/api.js", WebPg.ServeFile("api.js"))
+	http.HandleFunc("/", ServeHome())
+	http.HandleFunc("/index.html", ServeFile("index.html"))
+	http.HandleFunc("/app.js", ServeFile("app.js"))
+	http.HandleFunc("/api.js", ServeFile("api.js"))
 	http.HandleFunc("/get", GetHandler)
 	http.HandleFunc("/post", PostHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8888", nil))
 	fmt.Println("vim-go")
 }

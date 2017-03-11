@@ -13,8 +13,10 @@ import (
 
 var dialogs []string
 
+var upgdr = websocket.Upgrader{}
+
 func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
-	musubi, err := websocket.Upgrader(w, r, nil)
+	musubi, err := upgdr.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("Upgrade Err: ", err)
 		return
@@ -34,7 +36,7 @@ func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (wpg WebPg) ServeHome() func(http.ResponseWriter, *http.Request) {
+func ServeHome() func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.Error(w, "File Not Found", 404)
@@ -48,7 +50,7 @@ func (wpg WebPg) ServeHome() func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-func (wpg WebPg) ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
+func ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
 	return (func(w http.ResponseWriter, r *http.Request) {
 	})
 }

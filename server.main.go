@@ -2,6 +2,7 @@ package main
 
 import (
 	//"encoding/json"
+	"bytes"
 	"fmt"
 	"log"
 	//"io"
@@ -11,11 +12,27 @@ import (
 	//"strings"
 )
 
-var dialogs []string
+type Client struct {
+	msgs []string
+	stat int8
+}
 
-var upgdr = websocket.Upgrader{}
+func newClient() *Client {
+	return new(Client)
+}
+
+type Center struct {
+	web_clients []*Client
+}
+
+func newCenter() *Center {
+	return new(Center)
+}
+
+var dialogs []string = *new([]string)
 
 func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
+	var upgdr = websocket.Upgrader{}
 	musubi, err := upgdr.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("Upgrade Err: ", err)
@@ -26,34 +43,18 @@ func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
 		msg_type, msg_cx, err := musubi.ReadMessage()
 		if err != nil {
 			log.Print("Read Msg Err: ", err)
-			break
+			return
+		}
+		if len(msg_cx) != 0 {
+			dialogs = append(dialogs, (*bytes.NewBuffer(msg_cx)).String())
+			fmt.Println(dialogs)
 		}
 		err = musubi.WriteMessage(msg_type, msg_cx)
 		if err != nil {
 			log.Print("Write Msg Err: ", err)
-			break
+			return
 		}
 	}
-}
-
-func ServeHome() func(http.ResponseWriter, *http.Request) {
-	return (func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.Error(w, "File Not Found", 404)
-			return
-		}
-		if r.Method != "GET" {
-			http.Error(w, "Bad Access Method", 405)
-			return
-		}
-		http.ServeFile(w, r, "index.html")
-	})
-}
-
-func ServeFile(filename string) func(http.ResponseWriter, *http.Request) {
-	return (func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filename)
-	})
 }
 
 func main() {
@@ -62,6 +63,7 @@ func main() {
 	http.HandleFunc("/index.html", ServeFile("index.html"))
 	http.HandleFunc("/app.js", ServeFile("app.js"))
 	http.HandleFunc("/api.js", ServeFile("api.js"))
+
 	http.HandleFunc("/ws", WebSocketServFunc)
 
 	log.Fatal(http.ListenAndServe(":8888", nil))

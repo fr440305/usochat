@@ -25,6 +25,15 @@ type Center struct {
 	web_clients []*Client
 }
 
+func (c *Center) AddClient(new_cli *Client) error {
+	/* TODO - considerate possble error */
+	c.web_clients = append(c.web_clients, new_cli)
+	return nil
+}
+
+func (c *Client) Boardcast(msg string) {
+}
+
 func newCenter() *Center {
 	return new(Center)
 }

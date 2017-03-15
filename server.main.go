@@ -12,33 +12,30 @@ import (
 	//"strings"
 )
 
-type Client struct {
+type Node struct {
 	msgs []string
 	stat int8
 }
 
-func newClient() *Client {
-	return new(Client)
+func newNode() *Node {
+	return new(Node)
 }
 
 type Center struct {
-	web_clients []*Client
-}
-
-func (c *Center) AddClient(new_cli *Client) error {
-	/* TODO - considerate possble error */
-	c.web_clients = append(c.web_clients, new_cli)
-	return nil
-}
-
-func (c *Client) Boardcast(msg string) {
+	nodes []*Node
 }
 
 func newCenter() *Center {
 	return new(Center)
 }
+func (c *Center) AddNode(new_node *Node) error {
+	/* TODO - considerate possble error */
+	c.nodes = append(c.nodes, new_node)
+	return nil
+}
 
-var dialogs []string = *new([]string)
+func (c *Center) Boardcast(msg string) {
+}
 
 func WebSocketServFunc(w http.ResponseWriter, r *http.Request) {
 	var upgdr = websocket.Upgrader{}

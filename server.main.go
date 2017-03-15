@@ -21,10 +21,15 @@ type Node struct {
 }
 
 func newNode(center Center, w http.ResponseWriter, r *http.Request) *Node {
+	var upgdr = websocket.Upgrader{}
+	conn, err := upgdr.Upgrade(w, r, nil)
+	defer conn.Close()
 	var res = new(Node)
 	res.center = center
 	res.w = w
 	res.r = r
+	center.AddNode(res)
+	conn.WriteMessage(len(center.nodes))
 	return res
 }
 

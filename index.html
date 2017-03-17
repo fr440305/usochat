@@ -12,6 +12,7 @@
 			if (window.WebSocket != undefined) {
 				var ws_conn = new WebSocket("ws://127.0.0.1:9999/ws");
 				ws_conn.onopen = function () {
+					ws_conn.send("Add a new client, please!");
 					console.log("connection Opened!");
 				}
 				ws_conn.onmessage = function(e) {

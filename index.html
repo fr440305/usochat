@@ -4,9 +4,23 @@
 	<body>
 		<div id='_APP'>
 			<div> <b> WebSocket </b> </div>
+			<div id='_ONLINE'>
+				<span>The number of onliner:&nbsp;</span><span id='_THE_NUMBER_OF_ONLINER'></span>
+			</div>
 		</div>
 		<script>
-
+			if (window.WebSocket != undefined) {
+				var ws_conn = new WebSocket("ws://127.0.0.1:9999/ws");
+				ws_conn.onopen = function () {
+					console.log("connection Opened!");
+				}
+				ws_conn.onmessage = function(e) {
+					_THE_NUMBER_OF_ONLINER.innerHTML = e.data;
+				}
+				ws_conn.onclose = function () {
+					console.log("connection CLOSED!");
+				}
+			}
 		</script>
 	</body>
 </html>

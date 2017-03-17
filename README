@@ -1,0 +1,31 @@
+USO - Rewrite
+
+# Instruction :=
+
+  Uso is a simple online chatting platfrom.
+	It is in developing, so it's still cannot
+	be used yet.
+
+
+# Prog Detail :=
+  
+	This platform is developed by using
+	HTML/JavaScript as front-end and Golang
+	as server.
+
+  The front-end and server will be connected
+	by using WebSocket.
+
+  The dependent package(s) is/are:
+
+	o  github.com/gorilla/websocket
+	//   An implementation of WebSocket in Golang.
+
+
+# Author :=
+  
+	FireRain.
+	email: fr440305@gmail.com
+
+
+# END =:

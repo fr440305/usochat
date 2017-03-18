@@ -48,7 +48,8 @@ func main() {
 			}
 			fmt.Println(msg_type, msg_cx)
 			//Write the messages to the client:
-			if err = conn.WriteMessage(websocket.TextMessage, center.GetOnliner()); err != nil {
+			err = conn.WriteMessage(websocket.TextMessage, center.GetOnliner())
+			if err != nil {
 				fmt.Println("Fatal - conn--response")
 				return
 			}

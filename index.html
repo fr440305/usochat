@@ -5,23 +5,22 @@
 		<meta charset='utf-8'>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<!--
-
 		<link rel='stylesheet' type='text/css' href='uso.css'>
-
 		-->
 		<title> uso - A simple chatting online webpage </title>
 		<style>
+			input, input:focus, input:active {
+				user-select: text;
+			}
 			#_DASH_BOARD_ {
 				//border-style: dotted;
 				top: 0;
 				left: 0;
 				right: 0;
 			}
-
 			#_DIALOG_ {
 				//border-style: dotted;
 			}
-
 			#_SEND_ {
 				position: absolute;
 				margin-left: 1em;
@@ -31,27 +30,23 @@
 				bottom: 0;
 				//border-style: dotted;
 			}
-
 			#_SEND_CONFIG_ {
 				display: none;
 			}
-
 			#_SEND_DRAFT_ {
 				 /* hide this elem, also makes it does'y occupy the space:*/
 				display: none;
 			}
-
 			#_SEND_CONFIRM_ {
 				width: 5em;
 				right: 0;
 			}
-
 			#_SEND_OPTION_ {
 				width: 4em;
 			}
 			
 			#_SEND_TEXT_ {
-				width: calc(100% - 10em);
+				width: calc(100% - 12em);
 			}
 		</style>
 	</head>
@@ -90,4 +85,3 @@
 		<script type='text/javascript' src='app.js'> </script>
 	</body>
 </html>
-

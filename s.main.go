@@ -8,11 +8,17 @@ import "strconv"
 import "github.com/gorilla/websocket"
 
 type Center struct {
+	upgrader    websocket.Upgrader
 	num_onliner int
 }
 
 func newCenter() *Center {
-	return new(Center)
+	var res = new(Center)
+	res.upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	return res
 }
 
 //return the number of people online:
@@ -21,19 +27,19 @@ func (c *Center) GetOnliner() []byte {
 	return []byte(strconv.Itoa(c.num_onliner))
 }
 
-func (c *Center) AddOnliner() {
-	c.num_onliner += 1
+func (c *Center) AddOnliner(increment int) {
+	c.num_onliner += increment
 }
 
-func ServeWs(upgrader websocket.Upgrader, center *Center, w http.ResponseWriter, r *http.Request) {
+func (c *Center) ServeWs(w http.ResponseWriter, r *http.Request) {
 	//Initialization:
 	//create the connection:
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := c.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
 	fmt.Println("/ws - accessing....")
-	center.AddOnliner()
+	c.AddOnliner(1)
 	//Polling:
 	for {
 		//Read message from the client:
@@ -45,7 +51,7 @@ func ServeWs(upgrader websocket.Upgrader, center *Center, w http.ResponseWriter,
 		}
 		fmt.Println(msg_type, msg_cx)
 		//Write the messages(how many people onlines) to the client:
-		err = conn.WriteMessage(websocket.TextMessage, center.GetOnliner())
+		err = conn.WriteMessage(websocket.TextMessage, c.GetOnliner())
 		if err != nil {
 			fmt.Println("Fatal - conn--response")
 			return
@@ -56,16 +62,12 @@ func ServeWs(upgrader websocket.Upgrader, center *Center, w http.ResponseWriter,
 
 func main() {
 	fmt.Println("http://127.0.0.1:9999")
-	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
 	var center = newCenter()
 	//To serve the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		ServeWs(upgrader, center, w, r)
+		center.ServeWs(w, r)
 	})
 	http.ListenAndServe(":9999", nil)
 }

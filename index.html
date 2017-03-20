@@ -1,4 +1,5 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html>
 	<head>
 		<meta charset='utf-8'>
@@ -9,13 +10,83 @@
 
 		-->
 		<title> uso - A simple chatting online webpage </title>
+		<style>
+			#_DASH_BOARD_ {
+				//border-style: dotted;
+				top: 0;
+				left: 0;
+				right: 0;
+			}
+
+			#_DIALOG_ {
+				//border-style: dotted;
+			}
+
+			#_SEND_ {
+				position: absolute;
+				margin-left: 1em;
+				margin-right: 1em;
+				right: 0;
+				left: 0;
+				bottom: 0;
+				//border-style: dotted;
+			}
+
+			#_SEND_CONFIG_ {
+				display: none;
+			}
+
+			#_SEND_DRAFT_ {
+				 /* hide this elem, also makes it does'y occupy the space:*/
+				display: none;
+			}
+
+			#_SEND_CONFIRM_ {
+				width: 5em;
+				right: 0;
+			}
+
+			#_SEND_OPTION_ {
+				width: 4em;
+			}
+			
+			#_SEND_TEXT_ {
+				width: calc(100% - 10em);
+			}
+		</style>
 	</head>
 	<body>
-		<div id='ui'>
-			<div id='-uso-'></div>
-			<input type='text' id='say'></input>
-			<div id='sender' style='width:50px;height:50px;background-color:black;color:white'>submit</div>
+		<div id="_APP_">
+			<div id="_DASH_BOARD_">
+				- dash-board -
+			</div>
+			<div id="_DIALOG_"> </div>
+			<div id="_SEND_">
+				<hr />
+				<div id="_SEND_CONFIG_">
+					<!-- TODO -->
+					<!--
+						it's the config board. you can choose
+						what kind of info you wanna send.
+					-->
+					asdasd
+				</div>
+				<div id="_SEND_DRAFT_">
+				       	<!-- TODO -->
+					<!-- you can draw here. -->
+					<canvas id="_DRAFT_CANVAS_"> </canvas>
+					<hr />
+				</div>
+				<input id="_SEND_OPTION_" type="button" value="...">
+				<input id="_SEND_TEXT_" type="text">
+				<input id="_SEND_CONFIRM_" type="button" value="send">
+		       	</div>
 		</div>
+		<script>
+			_SEND_OPTION_.onclick = function () {
+				_SEND_CONFIG_.style.display = "block";
+			}
+		</script>
 		<script type='text/javascript' src='app.js'> </script>
 	</body>
 </html>

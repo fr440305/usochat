@@ -7,18 +7,36 @@ package main
 
 import "fmt"
 import "net/http"
-import "strconv"
 import "github.com/gorilla/websocket"
 
+//import "strconv"
+
+type Msg map[string][]byte
+
+//type Node maps to a client.
+type Node struct {
+	c_ptr *Center // a pointer to center.
+	//conn
+}
+
+//use go statment to call this func
+func (n *Node) Run(ifexit chan bool) {
+	fmt.Println("node::Run()")
+}
+
 type Center struct {
-	event_queue chan map[string]string
+	msg_queue   chan Msg
+	nodes       []*Node
 	upgrader    websocket.Upgrader //Constant
-	num_onliner int
+	num_onliner int                //just for test.
 }
 
 func newCenter() *Center {
+	fmt.Println("newCenter()")
 	var res = new(Center)
-	res.event_queue = make(chan map[string]string)
+	res.msg_queue = make(chan Msg)
+	res.nodes = *new([]*Node)
+	fmt.Println(res.nodes)
 	res.upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -26,61 +44,50 @@ func newCenter() *Center {
 	return res
 }
 
-//return the number of people online:
-func (c *Center) GetOnliner() []byte {
-	//convert c.num_online, which is int, to a byte array:
-	return []byte(strconv.Itoa(c.num_onliner))
+func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
+	fmt.Println("center::newNode()")
+	var res = new(Node)
+	res.c_ptr = c
+	//conn
+	c.nodes = append(c.nodes, res)
+	fmt.Println(c.GetOnliner())
+	return res
 }
 
-func (c *Center) AddOnliner(increment int) {
-	if c.num_onliner < increment {
-		c.num_onliner = 0
-	} else {
-		c.num_onliner += increment
-	}
-}
-
-func (c *Center) Listen() {
-}
-
-func (c *Center) ServeWs(w http.ResponseWriter, r *http.Request) {
-	//Initialization:
-	//create the connection:
-	conn, err := c.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	fmt.Println("/ws - accessing....")
-	c.AddOnliner(1)
-	//Polling:
+//listen and handle the msg.
+//use go statment to call this func.
+func (c *Center) Run() {
 	for {
-		//Read message from the client:
-		//code will be blocked here until it received msg:
-		msg_type, msg_cx, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println("Fatal - conn--readmsg")
-			return
+		select {
+		//case msg := <-c.msg_queue:
+		//...//
+		default:
 		}
-		fmt.Println(msg_type, msg_cx)
-		//Write the messages(how many people onlines) to the client:
-		err = conn.WriteMessage(websocket.TextMessage, c.GetOnliner())
-		if err != nil {
-			fmt.Println("Fatal - conn--response")
-			return
-		}
-		fmt.Println("conn--response....!")
 	}
+}
+
+//return the number of people online:
+func (c *Center) GetOnliner() int {
+	fmt.Println("center::GetOnliner()", c.nodes)
+	return len(c.nodes)
 }
 
 func main() {
 	fmt.Println("http://127.0.0.1:9999")
 	var center = newCenter()
+	go center.Run()
 	//To serve the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		//center.newNode().serveWs(w, r)
-		center.ServeWs(w, r)
+		var if_node_exit = make(chan bool)
+		go center.newNode(w, r).Run(if_node_exit)
+		//need to improved:
+		select {
+		case <-if_node_exit:
+			fmt.Println("A node exit.")
+			return
+		}
 	})
 	http.ListenAndServe(":9999", nil)
 }

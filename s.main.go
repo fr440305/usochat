@@ -1,5 +1,8 @@
 //BUG - After the client exit, the number in center will not reduce.
 //TODO - Add a onclose event in frontend.
+
+// USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
+
 package main
 
 import "fmt"
@@ -8,12 +11,14 @@ import "strconv"
 import "github.com/gorilla/websocket"
 
 type Center struct {
-	upgrader    websocket.Upgrader
+	event_queue chan map[string]string
+	upgrader    websocket.Upgrader //Constant
 	num_onliner int
 }
 
 func newCenter() *Center {
 	var res = new(Center)
+	res.event_queue = make(chan map[string]string)
 	res.upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -28,7 +33,14 @@ func (c *Center) GetOnliner() []byte {
 }
 
 func (c *Center) AddOnliner(increment int) {
-	c.num_onliner += increment
+	if c.num_onliner < increment {
+		c.num_onliner = 0
+	} else {
+		c.num_onliner += increment
+	}
+}
+
+func (c *Center) Listen() {
 }
 
 func (c *Center) ServeWs(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +79,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		//center.newNode().serveWs(w, r)
 		center.ServeWs(w, r)
 	})
 	http.ListenAndServe(":9999", nil)

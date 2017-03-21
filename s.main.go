@@ -23,7 +23,7 @@ type Node struct {
 //use go statment to call this func
 func (n *Node) Run(ifexit chan<- bool) {
 	//var err error
-	var if_listener_exit chan bool
+	var if_listener_exit = make(chan bool)
 	fmt.Println("node::Run()")
 	go func() {
 		//listener
@@ -40,23 +40,28 @@ func (n *Node) Run(ifexit chan<- bool) {
 				if_listener_exit <- true
 				return
 			}
+			//check the content that client sent, and push it to center.
 			if string(msg_cx[:]) == "_NEW_CLIENT_" {
 				fmt.Println("-new-client-")
+				//code for pushing goes here...
 			} else {
 				//other message...
+				fmt.Println("received msg from client:", string(msg_cx[:]))
+				//code for pushing goes here...
 			}
 		}
+	}()
+	go func() {
+		//responser
+		//fetch the msg from center, and send it to client.
 	}()
 	select {
 	case <-if_listener_exit:
 		//if the listener exit, then the whole node will exit.
 		ifexit <- true
+		fmt.Println("node::run() -close-node-")
 		return
-	default:
 	}
-	go func() {
-		//responser
-	}()
 }
 
 type Center struct {

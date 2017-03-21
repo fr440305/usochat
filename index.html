@@ -24,7 +24,7 @@ if (window.WebSocket != undefined) {
 		_RECEIVED_.innerHTML = e.data;
 	}
 	ws_conn.onclose = function () {
-		ws_conn.send("_CLOSE_CLIENT_");
+		//ws_conn has been closed in this time.
 	}
 }
 

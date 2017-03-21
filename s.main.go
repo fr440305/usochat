@@ -22,14 +22,32 @@ type Node struct {
 //use go statment to call this func
 func (n *Node) Run(ifexit chan<- bool) {
 	var err error
-	defer func() { ifexit <- true }()
+	var if_listener_exit chan bool
 	fmt.Println("node::Run()")
-	err = n.conn.WriteMessage(websocket.TextMessage, []byte{'h', 'e', 'l', 'l', 'o', ' ', 'c', 'l', 'i', 'e', 'n', 't'})
-	if err != nil {
-		fmt.Println("fatal - node::Run() - cannot write msg to cilent")
+	go func() {
+		//listener
+		var msg_type int
+		var msg_cx []byte
+		var err error
+		for {
+			//the code will be blocked here:
+			//but don't worry, becase it's in the go statment.
+			msg_type, msg_cx, err = n.conn.ReadMessage()
+			if err != nil {
+				fmt.Println("...")
+			}
+		}
+	}()
+	select {
+	case <-if_listener_exit:
+		//if the listener exit, then the whole node will exit.
+		ifexit <- true
+		return
+	default:
 	}
-	for {
-	}
+	go func() {
+		//responser
+	}()
 }
 
 type Center struct {

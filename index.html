@@ -2,26 +2,34 @@
 <html>
 	<head> </head>
 	<body>
-		<div id='_APP'>
+		<div id='_APP_'>
 			<div> <b> WebSocket </b> </div>
-			<div id='_ONLINE'>
-				<span>The number of onliner:&nbsp;</span><span id='_THE_NUMBER_OF_ONLINER'></span>
+			<div id='_ONLINE_'>
+				<span>received data:&nbsp;</span>
+				<span id='_RECEIVED_'></span>
 			</div>
 		</div>
 		<script>
-			if (window.WebSocket != undefined) {
-				var ws_conn = new WebSocket("ws://127.0.0.1:9999/ws");
-				ws_conn.onopen = function () {
-					ws_conn.send("Add a new client, please!");
-					console.log("connection Opened!");
-				}
-				ws_conn.onmessage = function(e) {
-					_THE_NUMBER_OF_ONLINER.innerHTML = e.data;
-				}
-				ws_conn.onclose = function () {
-					console.log("connection CLOSED!");
-				}
-			}
+
+
+
+if (window.WebSocket != undefined) {
+	//change the abs-url to document.host:
+	var ws_conn = new WebSocket("ws://127.0.0.1:9999/ws");
+	ws_conn.onopen = function () {
+		ws_conn.send("_NEW_CLIENT_");
+		console.log("connection Opened!");
+	}
+	ws_conn.onmessage = function(e) {
+		_RECEIVED_.innerHTML = e.data;
+	}
+	ws_conn.onclose = function () {
+		//ws_conn has been closed in this time.
+	}
+}
+
+
+
 		</script>
 	</body>
 </html>

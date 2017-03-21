@@ -11,7 +11,8 @@ import "github.com/gorilla/websocket"
 
 //import "strconv"
 
-type Msg map[string][]byte
+type Msg struct {
+}
 
 //type Node maps to a client.
 type Node struct {
@@ -21,20 +22,28 @@ type Node struct {
 
 //use go statment to call this func
 func (n *Node) Run(ifexit chan<- bool) {
-	var err error
+	//var err error
 	var if_listener_exit chan bool
 	fmt.Println("node::Run()")
 	go func() {
 		//listener
-		var msg_type int
+		//var msg_type int
 		var msg_cx []byte
 		var err error
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
-			msg_type, msg_cx, err = n.conn.ReadMessage()
+			_, msg_cx, err = n.conn.ReadMessage()
 			if err != nil {
-				fmt.Println("...")
+				//the client was closed.
+				fmt.Println("-close-client-")
+				if_listener_exit <- true
+				return
+			}
+			if string(msg_cx[:]) == "_NEW_CLIENT_" {
+				fmt.Println("-new-client-")
+			} else {
+				//other message...
 			}
 		}
 	}()
@@ -77,7 +86,10 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	res.c_ptr = c
 	res.conn, err = c.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("fatal - center::newNode - when creating the websocket.conn")
+		fmt.Println(
+			"fatal - center::newNode -",
+			"when creating the websocket.conn",
+		)
 	}
 	c.nodes = append(c.nodes, res)
 	fmt.Println("online: ", c.GetOnliner())

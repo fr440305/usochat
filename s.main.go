@@ -15,13 +15,21 @@ type Msg map[string][]byte
 
 //type Node maps to a client.
 type Node struct {
-	c_ptr *Center // a pointer to center.
-	//conn
+	c_ptr *Center         // a pointer to center.
+	conn  *websocket.Conn //connent client to node
 }
 
 //use go statment to call this func
-func (n *Node) Run(ifexit chan bool) {
+func (n *Node) Run(ifexit chan<- bool) {
+	var err error
+	defer func() { ifexit <- true }()
 	fmt.Println("node::Run()")
+	err = n.conn.WriteMessage(websocket.TextMessage, []byte{'h', 'e', 'l', 'l', 'o', ' ', 'c', 'l', 'i', 'e', 'n', 't'})
+	if err != nil {
+		fmt.Println("fatal - node::Run() - cannot write msg to cilent")
+	}
+	for {
+	}
 }
 
 type Center struct {
@@ -45,12 +53,16 @@ func newCenter() *Center {
 }
 
 func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
+	var err error
 	fmt.Println("center::newNode()")
 	var res = new(Node)
 	res.c_ptr = c
-	//conn
+	res.conn, err = c.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("fatal - center::newNode - when creating the websocket.conn")
+	}
 	c.nodes = append(c.nodes, res)
-	fmt.Println(c.GetOnliner())
+	fmt.Println("online: ", c.GetOnliner())
 	return res
 }
 
@@ -76,13 +88,12 @@ func main() {
 	fmt.Println("http://127.0.0.1:9999")
 	var center = newCenter()
 	go center.Run()
-	//To serve the webpages to the client:
+	//To provide the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		var if_node_exit = make(chan bool)
 		go center.newNode(w, r).Run(if_node_exit)
-		//need to improved:
 		select {
 		case <-if_node_exit:
 			fmt.Println("A node exit.")

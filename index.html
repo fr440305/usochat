@@ -6,10 +6,19 @@
 			<div> <b> WebSocket </b> </div>
 			<div id='_ONLINE_'>
 				<span>received data:&nbsp;</span>
-				<span id='_RECEIVED_'></span>
+				<div id='_RECEIVED_'></div>
+			</div>
+			<div id='_SEND_BOARD_'>
+				<input type='text' id='_SEND_CONTENT_'>
+				<input
+					type='button'
+					value='SEND'
+					id='_SEND_CONFIRM_'
+				>
 			</div>
 		</div>
 		<script>
+
 
 
 
@@ -21,12 +30,21 @@ if (window.WebSocket != undefined) {
 		console.log("connection Opened!");
 	}
 	ws_conn.onmessage = function(e) {
-		_RECEIVED_.innerHTML = e.data;
+		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>");
+
 	}
 	ws_conn.onclose = function () {
 		//ws_conn has been closed in this time.
 	}
+
+	_SEND_CONFIRM_.onclick = function () {
+		if (_SEND_CONTENT_.value != '') {
+			ws_conn.send(_SEND_CONTENT_.value);
+			_SEND_CONTENT_.value = ''
+		}
+	}
 }
+
 
 
 

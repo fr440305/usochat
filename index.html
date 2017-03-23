@@ -17,7 +17,7 @@
 				>
 			</div>
 		</div>
-		<script>
+		<script type='text/javascript'>
 
 
 
@@ -27,7 +27,7 @@ if (window.WebSocket != undefined) {
 	var ws_conn = new WebSocket("ws://127.0.0.1:9999/ws");
 	ws_conn.onopen = function () {
 		ws_conn.send("_NEW_CLIENT_");
-		console.log("connection Opened!");
+		_RECEIVED_.innerHTML += ("<p>Connection Opened.</p>");
 	}
 	ws_conn.onmessage = function(e) {
 		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>");
@@ -35,6 +35,7 @@ if (window.WebSocket != undefined) {
 	}
 	ws_conn.onclose = function () {
 		//ws_conn has been closed in this time.
+		_RECEIVED_.innerHTML += ("<p>Connection Closed.</p>");
 	}
 
 	_SEND_CONFIRM_.onclick = function () {

@@ -11,19 +11,24 @@ import "github.com/gorilla/websocket"
 
 //import "strconv"
 
-type Msg struct {
+type MsgFromCenter string
+
+type MsgFromNode struct {
+	source_node *Node
+	content     string
 }
 
 //type Node maps to a client.
 type Node struct {
-	c_ptr *Center         // a pointer to center.
-	conn  *websocket.Conn //connent client to node
+	msg_from_center chan MsgFromCenter
+	c_ptr           *Center         // a pointer to center.
+	conn            *websocket.Conn //connent client to node
 }
 
 //use go statment to call this func
 func (n *Node) Run(ifexit chan<- bool) {
 	//var err error
-	var if_listener_exit chan bool
+	var if_listener_exit = make(chan bool)
 	fmt.Println("node::Run()")
 	go func() {
 		//listener
@@ -40,10 +45,34 @@ func (n *Node) Run(ifexit chan<- bool) {
 				if_listener_exit <- true
 				return
 			}
+			//check the content that client sent,
+			//and push it to center.
 			if string(msg_cx[:]) == "_NEW_CLIENT_" {
 				fmt.Println("-new-client-")
+				//code for pushing goes here...
 			} else {
 				//other message...
+				var string_msg_cx = string(msg_cx[:])
+				fmt.Println(
+					"received msg from client:",
+					string_msg_cx,
+				)
+				//code for pushing goes here...
+				n.c_ptr.msg_queue <- MsgFromNode{
+					source_node: n,
+					content:     string_msg_cx,
+				}
+
+			}
+		}
+	}()
+	go func() {
+		//responser
+		//fetch the msg from center, and send it to client.
+		for {
+			select {
+			case msg := <-n.msg_from_center:
+				n.conn.WriteMessage(websocket.TextMessage, []byte(msg))
 			}
 		}
 	}()
@@ -51,16 +80,13 @@ func (n *Node) Run(ifexit chan<- bool) {
 	case <-if_listener_exit:
 		//if the listener exit, then the whole node will exit.
 		ifexit <- true
+		fmt.Println("node::run() -close-node-")
 		return
-	default:
 	}
-	go func() {
-		//responser
-	}()
 }
 
 type Center struct {
-	msg_queue   chan Msg
+	msg_queue   chan MsgFromNode
 	nodes       []*Node
 	upgrader    websocket.Upgrader //Constant
 	num_onliner int                //just for test.
@@ -69,7 +95,7 @@ type Center struct {
 func newCenter() *Center {
 	fmt.Println("newCenter()")
 	var res = new(Center)
-	res.msg_queue = make(chan Msg)
+	res.msg_queue = make(chan MsgFromNode)
 	res.nodes = *new([]*Node)
 	fmt.Println(res.nodes)
 	res.upgrader = websocket.Upgrader{
@@ -83,6 +109,7 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
 	fmt.Println("center::newNode()")
 	var res = new(Node)
+	res.msg_from_center = make(chan MsgFromCenter) //string
 	res.c_ptr = c
 	res.conn, err = c.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -101,9 +128,15 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 func (c *Center) Run() {
 	for {
 		select {
-		//case msg := <-c.msg_queue:
-		//...//
+		case msg := <-c.msg_queue: //msg has type::MsgFromNode
+			//if any of the node sends message,
+			//then the center will boardcast it
+			//back to all of the nodes.
+			for _, n := range c.nodes {
+				n.msg_from_center <- MsgFromCenter(msg.content)
+			}
 		default:
+			//exit selector
 		}
 	}
 }

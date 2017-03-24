@@ -1,6 +1,3 @@
-//BUG - After the client exit, the number in center will not reduce.
-//TODO - Add a onclose event in frontend.
-
 // USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
 
 package main

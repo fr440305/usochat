@@ -1,6 +1,3 @@
-//BUG - After the client exit, the number in center will not reduce.
-//TODO - Add a onclose event in frontend.
-
 // USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
 
 package main
@@ -72,7 +69,10 @@ func (n *Node) Run(ifexit chan<- bool) {
 		for {
 			select {
 			case msg := <-n.msg_from_center:
-				n.conn.WriteMessage(websocket.TextMessage, []byte(msg))
+				n.conn.WriteMessage(
+					websocket.TextMessage,
+					[]byte(msg),
+				)
 			}
 		}
 	}()
@@ -126,6 +126,7 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 //listen and handle the msg.
 //use go statment to call this func.
 func (c *Center) Run() {
+	var msg_to_node MsgFromCenter
 	for {
 		select {
 		case msg := <-c.msg_queue: //msg has type::MsgFromNode
@@ -133,10 +134,9 @@ func (c *Center) Run() {
 			//then the center will boardcast it
 			//back to all of the nodes.
 			for _, n := range c.nodes {
-				n.msg_from_center <- MsgFromCenter(msg.content)
+				msg_to_node = MsgFromCenter(msg.content)
+				n.msg_from_center <- msg_to_node
 			}
-		default:
-			//exit selector
 		}
 	}
 }

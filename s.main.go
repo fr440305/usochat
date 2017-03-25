@@ -15,6 +15,9 @@ type Msg struct {
 	content     string
 }
 
+func (M *Msg) jsonlify() {
+}
+
 //type Node maps to a client.
 type Node struct {
 	msg_from_center chan Msg
@@ -23,7 +26,7 @@ type Node struct {
 }
 
 //use go statment to call this func
-func (n *Node) Run(ifexit chan<- bool) {
+func (N *Node) run(ifexit chan<- bool) {
 	//var err error
 	var if_listener_exit = make(chan bool)
 	fmt.Println("node::Run()")
@@ -35,7 +38,7 @@ func (n *Node) Run(ifexit chan<- bool) {
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
-			_, msg_cx, err = n.conn.ReadMessage()
+			_, msg_cx, err = N.conn.ReadMessage()
 			if err != nil {
 				//the client was closed.
 				fmt.Println("-close-client-")
@@ -55,8 +58,8 @@ func (n *Node) Run(ifexit chan<- bool) {
 					string_msg_cx,
 				)
 				//code for pushing goes here...
-				n.c_ptr.msg_queue <- Msg{
-					source_node: n,
+				N.c_ptr.msg_queue <- Msg{
+					source_node: N,
 					content:     string_msg_cx,
 				}
 
@@ -68,8 +71,8 @@ func (n *Node) Run(ifexit chan<- bool) {
 		//fetch the msg from center, and send it to client.
 		for {
 			select {
-			case msg := <-n.msg_from_center:
-				n.conn.WriteMessage(
+			case msg := <-N.msg_from_center:
+				N.conn.WriteMessage(
 					websocket.TextMessage,
 					[]byte(msg.content),
 				)
@@ -105,42 +108,42 @@ func newCenter() *Center {
 	}
 }
 
-func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
+func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
 	fmt.Println("center::newNode()")
 	var res = new(Node)
 	res.msg_from_center = make(chan Msg) //string
-	res.c_ptr = c
-	res.conn, err = c.upgrader.Upgrade(w, r, nil)
+	res.c_ptr = C
+	res.conn, err = C.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(
 			"fatal - center::newNode -",
 			"when creating the websocket.conn",
 		)
 	}
-	c.nodes = append(c.nodes, res)
-	fmt.Println("online: ", c.GetOnliner())
+	C.nodes = append(C.nodes, res)
+	fmt.Println("online: ", C.getOnliner())
 	return res
 }
 
 //This method send message to all the nodes.
-func (c *Center) Boardcast(board_msg Msg) error {
-	for _, n := range c.nodes {
-		n.msg_from_center <- board_msg
+func (C *Center) boardcast(board_msg Msg) error {
+	for _, N := range C.nodes {
+		N.msg_from_center <- board_msg
 	}
 	return nil //TODO//
 }
 
 //listen and handle the msg.
 //use go statment to call this func.
-func (c *Center) Run() {
+func (C *Center) run() {
 	for {
 		select {
-		case msg := <-c.msg_queue:
+		case msg := <-C.msg_queue:
 			//if any of the node sends message,
 			//then the center will boardcast it
 			//back to all of the nodes.
-			c.Boardcast(Msg{
+			C.boardcast(Msg{
 				source_node: nil,
 				content:     msg.content,
 			})
@@ -149,21 +152,21 @@ func (c *Center) Run() {
 }
 
 //return the number of people online:
-func (c *Center) GetOnliner() int {
-	fmt.Println("center::GetOnliner()", c.nodes)
-	return len(c.nodes)
+func (C *Center) getOnliner() int {
+	fmt.Println("center::GetOnliner()", C.nodes)
+	return len(C.nodes)
 }
 
 func main() {
 	fmt.Println("http://127.0.0.1:9999")
 	var center = newCenter()
-	go center.Run()
+	go center.run()
 	//To provide the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		var if_node_exit = make(chan bool)
-		go center.newNode(w, r).Run(if_node_exit)
+		go center.newNode(w, r).run(if_node_exit)
 		select {
 		case <-if_node_exit:
 			fmt.Println("A node exit.")

@@ -10,7 +10,7 @@ import "github.com/gorilla/websocket"
 
 type Msg struct {
 	//If source_node != nil then it is a message from node to center.
-	//else, it is from center to node.
+	//else it is from center to node.
 	source_node *Node
 	content     string
 }
@@ -94,7 +94,6 @@ type Center struct {
 
 func newCenter() *Center {
 	fmt.Println("newCenter()")
-	var res = new(Center)
 	return &Center{
 		msg_queue: make(chan Msg),
 		nodes:     *new([]*Node),
@@ -126,25 +125,25 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 
 //This method send message to all the nodes.
 func (c *Center) Boardcast(board_msg Msg) error {
+	for _, n := range c.nodes {
+		n.msg_from_center <- board_msg
+	}
+	return nil //TODO//
 }
 
 //listen and handle the msg.
 //use go statment to call this func.
 func (c *Center) Run() {
-	var msg_to_node Msg
 	for {
 		select {
-		case msg := <-c.msg_queue: //msg has type::MsgFromNode
+		case msg := <-c.msg_queue:
 			//if any of the node sends message,
 			//then the center will boardcast it
 			//back to all of the nodes.
-			for _, n := range c.nodes {
-				msg_to_node = Msg{
-					source_node: nil,
-					content:     msg.content,
-				}
-				n.msg_from_center <- msg_to_node
-			}
+			c.Boardcast(Msg{
+				source_node: nil,
+				content:     msg.content,
+			})
 		}
 	}
 }

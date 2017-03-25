@@ -3,6 +3,7 @@
 package main
 
 import "fmt"
+import "html"
 import "net/http"
 import "github.com/gorilla/websocket"
 
@@ -60,7 +61,7 @@ func (N *Node) run(ifexit chan<- bool) {
 				//code for pushing goes here...
 				N.c_ptr.msg_queue <- Msg{
 					source_node: N,
-					content:     string_msg_cx,
+					content:     html.EscapeString(string_msg_cx),
 				}
 
 			}

@@ -95,14 +95,15 @@ type Center struct {
 func newCenter() *Center {
 	fmt.Println("newCenter()")
 	var res = new(Center)
-	res.msg_queue = make(chan Msg)
-	res.nodes = *new([]*Node)
-	fmt.Println(res.nodes)
-	res.upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+	return &Center{
+		msg_queue: make(chan Msg),
+		nodes:     *new([]*Node),
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+		},
+		num_onliner: 0,
 	}
-	return res
 }
 
 func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
@@ -121,6 +122,10 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	c.nodes = append(c.nodes, res)
 	fmt.Println("online: ", c.GetOnliner())
 	return res
+}
+
+//This method send message to all the nodes.
+func (c *Center) Boardcast(board_msg Msg) error {
 }
 
 //listen and handle the msg.

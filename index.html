@@ -2,20 +2,31 @@
 <html>
 	<head>
 		<meta name='viewport' content='width=300px;initial-scale=1.0'>
+		<style>
+
+
+
+#_SEND_CONTENT_ {
+	font-size: 16px;
+	width: 95%;
+}
+
+
+
+		</style>
 	</head>
 	<body>
-		<div id="_TEST_"> </div>
+		<div id="_TEST_" />
 		<div id='_APP_'>
 			<div> <b> WebSocket </b> </div>
 			<div id='_ONLINE_'>
 				<span>received data:&nbsp;</span>
-				<div id='_RECEIVED_'></div>
+				<div id='_RECEIVED_' />
 			</div>
 			<div id='_SEND_BOARD_'>
 				<p><input
 					type='text'
-					id='_SEND_CONTENT_'
-					style='font-size:16px;width:95%;'></p>
+					id='_SEND_CONTENT_'></p>
 				<p><input
 					type='button'
 					value='SEND'
@@ -26,17 +37,17 @@
 
 
 
-
 if (window.WebSocket != undefined) {
 	//change the abs-url to document.host:
 	var ws_conn = new WebSocket("ws://" + document.location.host + "/ws");
-	_TEST_.innerHTML += "<p> WebSocket opened </p>";
+	_TEST_.innerHTML += "<p> +++ client-WebSocket </p>";
 	ws_conn.onopen = function () {
-		_TEST_.innerHTML += "<p>+++</p>";
-		ws_conn.send("_NEW_CLIENT_");
+		_TEST_.innerHTML += "<p>+++ Server-websocket</p>";
+		ws_conn.send("_NEW_CLIENT_"); // will be a json.
 		_RECEIVED_.innerHTML += ("<p>Connection Opened.</p>");
 	};
 	ws_conn.onmessage = function(e) {
+		//e.data will be jsonlified later on.
 		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>");
 
 	};
@@ -44,11 +55,12 @@ if (window.WebSocket != undefined) {
 		_TEST_.innerHTML += ("<p>" + e.data + "</p>");
 	};
 	ws_conn.onclose = function () {
+		//The sever crash???
 		//ws_conn has been closed in this time.
 		_TEST_.innerHTML += "<p> ~~~ </p>";
 		_RECEIVED_.innerHTML += ("<p>Connection Closed.</p>");
 	};
-
+	//To allow the user to send the messages by pressing enter.
 	_SEND_CONTENT_.onkeyup = function (e) {
 		e = e || windows.event;
 		e = e.keyCode || e.which;
@@ -63,14 +75,14 @@ if (window.WebSocket != undefined) {
 		}
 	};
 } else {
-	alert("No WebSocket Supported.");
+	_TEST_.innerHTML += (
+		"<p>No WebSocket Util Supported. </p>" +
+		"<p> 强烈建议您使用谷歌浏览器或者火狐浏览器。</p>"
+	);
 }
-
 
 
 
 		</script>
 	</body>
 </html>
-				
-

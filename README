@@ -56,8 +56,8 @@ USO - Rewrite
 		type Node struct {...}
 		type Center struct {...}
 
-	The methods will be coded in camelStyle. Use more than one
-	word as possible.
+	The methods and the constructors will be coded in camelStyle.
+	Use as more than one word as possible.
 	eg:
 		func (c *Center) boardcast () error
 		func (n *Node) sendMsgToCenter () error

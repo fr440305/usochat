@@ -8,16 +8,16 @@ import "github.com/gorilla/websocket"
 
 //import "strconv"
 
-type MsgFromCenter string
-
-type MsgFromNode struct {
+type Msg struct {
+	//If source_node != nil then it is a message from node to center.
+	//else, it is from center to node.
 	source_node *Node
 	content     string
 }
 
 //type Node maps to a client.
 type Node struct {
-	msg_from_center chan MsgFromCenter
+	msg_from_center chan Msg
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
 }
@@ -55,7 +55,7 @@ func (n *Node) Run(ifexit chan<- bool) {
 					string_msg_cx,
 				)
 				//code for pushing goes here...
-				n.c_ptr.msg_queue <- MsgFromNode{
+				n.c_ptr.msg_queue <- Msg{
 					source_node: n,
 					content:     string_msg_cx,
 				}
@@ -71,7 +71,7 @@ func (n *Node) Run(ifexit chan<- bool) {
 			case msg := <-n.msg_from_center:
 				n.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg),
+					[]byte(msg.content),
 				)
 			}
 		}
@@ -86,7 +86,7 @@ func (n *Node) Run(ifexit chan<- bool) {
 }
 
 type Center struct {
-	msg_queue   chan MsgFromNode
+	msg_queue   chan Msg
 	nodes       []*Node
 	upgrader    websocket.Upgrader //Constant
 	num_onliner int                //just for test.
@@ -95,7 +95,7 @@ type Center struct {
 func newCenter() *Center {
 	fmt.Println("newCenter()")
 	var res = new(Center)
-	res.msg_queue = make(chan MsgFromNode)
+	res.msg_queue = make(chan Msg)
 	res.nodes = *new([]*Node)
 	fmt.Println(res.nodes)
 	res.upgrader = websocket.Upgrader{
@@ -109,7 +109,7 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
 	fmt.Println("center::newNode()")
 	var res = new(Node)
-	res.msg_from_center = make(chan MsgFromCenter) //string
+	res.msg_from_center = make(chan Msg) //string
 	res.c_ptr = c
 	res.conn, err = c.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -126,7 +126,7 @@ func (c *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 //listen and handle the msg.
 //use go statment to call this func.
 func (c *Center) Run() {
-	var msg_to_node MsgFromCenter
+	var msg_to_node Msg
 	for {
 		select {
 		case msg := <-c.msg_queue: //msg has type::MsgFromNode
@@ -134,7 +134,10 @@ func (c *Center) Run() {
 			//then the center will boardcast it
 			//back to all of the nodes.
 			for _, n := range c.nodes {
-				msg_to_node = MsgFromCenter(msg.content)
+				msg_to_node = Msg{
+					source_node: nil,
+					content:     msg.content,
+				}
 				n.msg_from_center <- msg_to_node
 			}
 		}

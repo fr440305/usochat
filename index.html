@@ -81,12 +81,15 @@ if (window.WebSocket != undefined) {
 		if (_SEND_CONTENT_.value != '') {
 			ws_conn.send(_SEND_CONTENT_.value);
 			_SEND_CONTENT_.value = '';
+			_SEND_CONTENT_.click();
+			_SEND_CONTENT_.focus();
 		}
 	};
 } else {
 	_TEST_.innerHTML += (
-		"<p>No WebSocket Util Supported. </p>" +
-		"<p> 强烈建议您使用谷歌浏览器或者火狐浏览器。</p>"
+		"<p>No WebSocket Util Supported. </p>" 
+		+"<p> 肥肠抱歉~ 您的浏览器是个战五渣呢。</p>"
+		+"<p> 强烈建议您使用谷歌浏览器或者火狐浏览器。</p>"
 	);
 }
 

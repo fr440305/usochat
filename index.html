@@ -16,27 +16,38 @@
 		</style>
 	</head>
 	<body>
-		<div id="_TEST_" />
+		<input type='button' value='LIGHT' id='_LIGHT_'>
+		<input type='button' value='DARK' id='_DARK_'>
+		<div id="_TEST_"></div>
 		<div id='_APP_'>
 			<div> <b> WebSocket </b> </div>
 			<div id='_ONLINE_'>
 				<span>received data:&nbsp;</span>
-				<div id='_RECEIVED_' />
+				<div id='_RECEIVED_'></div>
 			</div>
 			<div id='_SEND_BOARD_'>
-				<p><input
-					type='text'
-					id='_SEND_CONTENT_'></p>
-				<p><input
+				<hr />
+				<p style="text-align:right;"><input
 					type='button'
 					value='SEND'
 					id='_SEND_CONFIRM_'></p>
+				<p><input
+					type='text'
+					id='_SEND_CONTENT_'></p>
+				<hr />
 			</div>
 		</div>
 		<script type='text/javascript'>
 
 
-
+_DARK_.onclick = function () {
+	document.body.style.backgroundColor = "#000";
+	document.body.style.color = "#fff";
+};
+_LIGHT_.onclick = function () {
+	document.body.style.backgroundColor = "#fff";
+	document.body.style.color = "#000";
+};
 if (window.WebSocket != undefined) {
 	//change the abs-url to document.host:
 	var ws_conn = new WebSocket("ws://" + document.location.host + "/ws");
@@ -66,18 +77,22 @@ if (window.WebSocket != undefined) {
 		e = e.keyCode || e.which;
 		if (e === 13) {
 			_SEND_CONFIRM_.onclick();
+			_SEND_CONTENT_.click();
 		}
 	};
 	_SEND_CONFIRM_.onclick = function () {
 		if (_SEND_CONTENT_.value != '') {
 			ws_conn.send(_SEND_CONTENT_.value);
 			_SEND_CONTENT_.value = '';
+			_SEND_CONTENT_.click();
+			_SEND_CONTENT_.focus();
 		}
 	};
 } else {
 	_TEST_.innerHTML += (
-		"<p>No WebSocket Util Supported. </p>" +
-		"<p> 强烈建议您使用谷歌浏览器或者火狐浏览器。</p>"
+		"<p>No WebSocket Util Supported. </p>" 
+		+"<p> 肥肠抱歉~ 您的浏览器是个战五渣呢。</p>"
+		+"<p> 强烈建议您使用谷歌浏览器或者火狐浏览器。</p>"
 	);
 }
 

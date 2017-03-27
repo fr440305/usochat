@@ -33,6 +33,8 @@ type Node struct {
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
 	index           int64           // The index of this node in Center.nodes.
+	prev            *Node
+	next            *Node
 }
 
 //use go statment to call this func

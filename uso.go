@@ -163,7 +163,7 @@ func main() {
 	var center = newCenter()
 	go center.run()
 	//To provide the webpages to the client:
-	http.Handle("/", http.FileServer(http.Dir(".")))
+	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		var if_node_exit = make(chan bool)

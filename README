@@ -28,13 +28,13 @@ USO - Rewrite
 		[Client] <-- JSON --> [Node]
 		[Client] <-- JSON --> [Node]
 		
-			... ... ... ...
+		      ... ... ... ...
 
 		[Client] <--(JSON)--> [Node]
 		                       |  ^
-			(MsgFromNode)  |  |  (MsgFromCenter)
-				       V  |
-				      [Center]
+		                (Msg)  |  |  (Msg)
+		                       V  |
+	                             [Center]
 
 	# Modules :=
 
@@ -59,6 +59,8 @@ USO - Rewrite
 	The methods and the constructors will be coded in camelStyle.
 	Use as more than one word as possible.
 	eg:
+		func newCenter () *Center
+		func (C *Center) newNode () *Node
 		func (c *Center) boardcast () error
 		func (n *Node) sendMsgToCenter () error
 

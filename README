@@ -28,13 +28,13 @@ USO - Rewrite
 		[Client] <-- JSON --> [Node]
 		[Client] <-- JSON --> [Node]
 		
-			... ... ... ...
+		      ... ... ... ...
 
 		[Client] <--(JSON)--> [Node]
 		                       |  ^
-			(MsgFromNode)  |  |  (MsgFromCenter)
-				       V  |
-				      [Center]
+		                (Msg)  |  |  (Msg)
+		                       V  |
+	                             [Center]
 
 	# Modules :=
 
@@ -59,12 +59,14 @@ USO - Rewrite
 	The methods and the constructors will be coded in camelStyle.
 	Use as more than one word as possible.
 	eg:
+		func newCenter () *Center
+		func (C *Center) newNode () *Node
 		func (c *Center) boardcast () error
 		func (n *Node) sendMsgToCenter () error
 
-	The tool functions (utilities) will be named in underscore
-	style, with a underscore prefix (stands for its father-class
-	is `_`, except for main function).
+	The tool functions (utilities) will be named in canmelStyle,
+	with a underscore prefix (stands for its father-class is `_`,
+	except for main function).
 	eg:
 		func _strToMsg (source string) ([]byte, err)
 

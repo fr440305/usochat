@@ -13,10 +13,18 @@ type Msg struct {
 	//If source_node != nil then it is a message from node to center.
 	//else it is from center to node.
 	source_node *Node
+	description string
 	content     string
 }
 
 func (M *Msg) jsonlify() {
+}
+
+func (M *Msg) Error() string {
+	if M.description == "error" {
+		return M.content
+	}
+	return ""
 }
 
 //type Node maps to a client.
@@ -24,6 +32,7 @@ type Node struct {
 	msg_from_center chan Msg
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
+	index           int64           // The index of this node in Center.nodes.
 }
 
 //use go statment to call this func
@@ -43,6 +52,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			if err != nil {
 				//the client was closed.
 				fmt.Println("-close-client-")
+				N.c_ptr.removeNode(N)
 				if_listener_exit <- true
 				return
 			}
@@ -89,11 +99,27 @@ func (N *Node) run(ifexit chan<- bool) {
 	}
 }
 
+// list of nodes.
+type Nodelist struct {
+}
+
+func newNodelist() *Nodelist {
+	return nil
+}
+
+func (NL *Nodelist) Front() {
+}
+
+func (NL *Nodelist) Last() {
+}
+
+func (NL *Nodelist) Len() {
+}
+
 type Center struct {
-	msg_queue   chan Msg
-	nodes       []*Node
-	upgrader    websocket.Upgrader //Constant
-	num_onliner int                //just for test.
+	msg_queue chan Msg
+	nodes     []*Node
+	upgrader  websocket.Upgrader //Constant
 }
 
 func newCenter() *Center {
@@ -105,7 +131,6 @@ func newCenter() *Center {
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		},
-		num_onliner: 0,
 	}
 }
 
@@ -115,6 +140,7 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var res = new(Node)
 	res.msg_from_center = make(chan Msg) //string
 	res.c_ptr = C
+	res.index = int64(len(C.nodes))
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(
@@ -125,6 +151,13 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	C.nodes = append(C.nodes, res)
 	fmt.Println("online: ", C.getOnliner())
 	return res
+}
+
+//This method removes the useless node from center.nodes.
+//If the node cannot be found, it returns a error.
+func (C *Center) removeNode(useless_node *Node) error {
+	C.nodes[useless_node.index] = nil
+	return nil
 }
 
 //This method send message to all the nodes.

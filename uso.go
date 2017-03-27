@@ -33,8 +33,6 @@ type Node struct {
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
 	index           int64           // The index of this node in Center.nodes.
-	prev            *Node
-	next            *Node
 }
 
 //use go statment to call this func
@@ -101,23 +99,6 @@ func (N *Node) run(ifexit chan<- bool) {
 	}
 }
 
-// list of nodes.
-type Nodelist struct {
-}
-
-func newNodelist() *Nodelist {
-	return nil
-}
-
-func (NL *Nodelist) Front() {
-}
-
-func (NL *Nodelist) Last() {
-}
-
-func (NL *Nodelist) Len() {
-}
-
 type Center struct {
 	msg_queue chan Msg
 	nodes     []*Node
@@ -157,8 +138,8 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 
 //This method removes the useless node from center.nodes.
 //If the node cannot be found, it returns a error.
-func (C *Center) removeNode(useless_node *Node) error {
-	C.nodes[useless_node.index] = nil
+func (C *Center) removeNode(rm_node *Node) error {
+	C.nodes = append(C.nodes[:rm_node.index], C.nodes[rm_node.index+1:]...)
 	return nil
 }
 

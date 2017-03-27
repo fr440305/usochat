@@ -53,15 +53,15 @@ func (N *Node) run(ifexit chan<- bool) {
 				//code for pushing goes here...
 			} else {
 				//other message...
-				var string_msg_cx = string(msg_cx[:])
+				str_msg_cx := html.EscapeString(string(msg_cx[:]))
 				fmt.Println(
 					"received msg from client:",
-					string_msg_cx,
+					str_msg_cx,
 				)
 				//code for pushing goes here...
 				N.c_ptr.msg_queue <- Msg{
 					source_node: N,
-					content:     html.EscapeString(string_msg_cx),
+					content:     str_msg_cx,
 				}
 
 			}

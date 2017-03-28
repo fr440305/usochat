@@ -1,4 +1,5 @@
 // USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
+// USE SLICE EVERYWHERE - DO NOT USE container/list.
 
 package main
 
@@ -103,6 +104,7 @@ type Center struct {
 	msg_queue chan Msg
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
+	nodes_len int64
 }
 
 func newCenter() *Center {
@@ -114,6 +116,7 @@ func newCenter() *Center {
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		},
+		nodes_len: 0,
 	}
 }
 
@@ -123,7 +126,6 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var res = new(Node)
 	res.msg_from_center = make(chan Msg) //string
 	res.c_ptr = C
-	res.index = int64(len(C.nodes))
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(
@@ -132,6 +134,7 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 		)
 	}
 	C.nodes = append(C.nodes, res)
+	C.nodes_len += 1
 	fmt.Println("online: ", C.getOnliner())
 	return res
 }
@@ -139,7 +142,14 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 //This method removes the useless node from center.nodes.
 //If the node cannot be found, it returns a error.
 func (C *Center) removeNode(rm_node *Node) error {
-	C.nodes = append(C.nodes[:rm_node.index], C.nodes[rm_node.index+1:]...)
+	var i = 0
+	var node_ptr *Node = nil
+	for i, node_ptr = range C.nodes {
+		if node_ptr == rm_node {
+			break
+		}
+	}
+	C.nodes = append(C.nodes[:i], C.nodes[i+1:]...)
 	return nil
 }
 

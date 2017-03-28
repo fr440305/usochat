@@ -104,7 +104,6 @@ type Center struct {
 	msg_queue chan Msg
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
-	nodes_len int64
 }
 
 func newCenter() *Center {
@@ -116,7 +115,6 @@ func newCenter() *Center {
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		},
-		nodes_len: 0,
 	}
 }
 
@@ -134,7 +132,6 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 		)
 	}
 	C.nodes = append(C.nodes, res)
-	C.nodes_len += 1
 	fmt.Println("online: ", C.getOnliner())
 	return res
 }
@@ -154,9 +151,9 @@ func (C *Center) removeNode(rm_node *Node) error {
 }
 
 //This method send message to all the nodes.
-func (C *Center) boardcast(board_msg Msg) error {
+func (C *Center) boardcast(boardcast_msg Msg) error {
 	for _, N := range C.nodes {
-		N.msg_from_center <- board_msg
+		N.msg_from_center <- boardcast_msg
 	}
 	return nil //TODO//
 }

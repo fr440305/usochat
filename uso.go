@@ -1,5 +1,7 @@
 // USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
 // USE SLICE EVERYWHERE - DO NOT USE container/list.
+// 不光要思考架构，还要思考架构的迭代与演化。
+// 要牢记：软件是长出来的。
 
 package main
 

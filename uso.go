@@ -17,10 +17,14 @@ type Msg struct {
 	//else it is from center to node.
 	source_node *Node
 	description string
-	content     string
+	content     string //will be a slice
 }
 
-func (M *Msg) jsonlify() {
+func (M *Msg) praseJSON(json_raw string) *Msg {
+	return nil
+}
+
+func (M *Msg) jsonify() {
 }
 
 func (M *Msg) Error() string {
@@ -45,13 +49,15 @@ func (N *Node) run(ifexit chan<- bool) {
 	fmt.Println("node::Run()")
 	go func() {
 		//listener
-		//var msg_type int
+		//This goroutine receive msgs in the form of JSON from client.
 		var msg_cx []byte
 		var err error
+		var str_msg_cx string
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
 			_, msg_cx, err = N.conn.ReadMessage()
+			str_msg_cx = string(msg_cx[:])
 			if err != nil {
 				//the client was closed.
 				fmt.Println("-close-client-")
@@ -61,22 +67,22 @@ func (N *Node) run(ifexit chan<- bool) {
 			}
 			//check the content that client sent,
 			//and push it to center.
-			if string(msg_cx[:]) == "_NEW_CLIENT_" {
+			if str_msg_cx == "_NEW_CLIENT_" {
 				fmt.Println("-new-client-")
 				//code for pushing goes here...
 			} else {
 				//other message...
-				str_msg_cx := html.EscapeString(string(msg_cx[:]))
 				fmt.Println(
 					"received msg from client:",
 					str_msg_cx,
+					html.EscapeString(str_msg_cx),
 				)
+				//str_msg_cx := html.EscapeString(str_msg_cx)
 				//code for pushing goes here...
 				N.c_ptr.msg_queue <- Msg{
 					source_node: N,
 					content:     str_msg_cx,
 				}
-
 			}
 		}
 	}()
@@ -104,6 +110,7 @@ func (N *Node) run(ifexit chan<- bool) {
 
 type Center struct {
 	msg_queue chan Msg
+	user_msgs []*Msg
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
 }
@@ -112,6 +119,7 @@ func newCenter() *Center {
 	fmt.Println("newCenter()")
 	return &Center{
 		msg_queue: make(chan Msg),
+		user_msgs: *new([]*Msg),
 		nodes:     *new([]*Node),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,

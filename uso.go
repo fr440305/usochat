@@ -17,14 +17,16 @@ type Msg struct {
 	//else it is from center to node.
 	source_node *Node
 	description string
-	content     string //will be a slice
+	content     string //TODO - will be a slice
 }
 
-func (M *Msg) praseJSON(json_raw string) *Msg {
-	return nil
+//This method parse json string and change it into Msg::M.
+func (M *Msg) parseJSON(json_raw string) *Msg {
+	return M
 }
 
-func (M *Msg) jsonify() {
+//This method transforms the Msg::M to JSON string.
+func (M *Msg) jsonify() string {
 }
 
 func (M *Msg) Error() string {

@@ -53,13 +53,24 @@ if (window.WebSocket != undefined) {
 	var ws_conn = new WebSocket("ws://" + document.location.host + "/ws");
 	_TEST_.innerHTML += "<p> +++ client-WebSocket </p>";
 	ws_conn.onopen = function () {
+		var json_msg = {
+			"source-node":"",
+			"description":"user-login",
+			"content":[]
+		};
 		_TEST_.innerHTML += "<p>+++ Server-websocket</p>";
 		ws_conn.send("_NEW_CLIENT_"); // will be a json.
+		//ws_conn.send(JSON.stringify(json_msg)); // will be a json.
+
 		_RECEIVED_.innerHTML += ("<p>Connection Opened.</p>");
 	};
 	ws_conn.onmessage = function(e) {
 		//e.data will be jsonlified later on.
-		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>");
+		var msg_content = JSON.parse(e.data);
+		msg_content = msg_content["content"]; // now, msg_content is a string array.
+		for (var i = 0; i < msg_content.length; i++) {
+			_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
+		}
 
 	};
 	ws_conn.onerror = function (e) {
@@ -81,8 +92,14 @@ if (window.WebSocket != undefined) {
 		}
 	};
 	_SEND_CONFIRM_.onclick = function () {
+		var json_msg = {
+			"source-node":"",
+			"description":"user-msg-text",
+			"content":[]
+		};
 		if (_SEND_CONTENT_.value != '') {
-			ws_conn.send(_SEND_CONTENT_.value);
+			json_msg["content"].push(_SEND_CONTENT_.value);
+			ws_conn.send(JSON.stringify(json_msg));
 			_SEND_CONTENT_.value = '';
 			_SEND_CONTENT_.click();
 			_SEND_CONTENT_.focus();

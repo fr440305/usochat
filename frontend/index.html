@@ -59,8 +59,8 @@ if (window.WebSocket != undefined) {
 			"content":[]
 		};
 		_TEST_.innerHTML += "<p>+++ Server-websocket</p>";
-		ws_conn.send("_NEW_CLIENT_"); // will be a json.
-		//ws_conn.send(JSON.stringify(json_msg)); // will be a json.
+		//ws_conn.send("_NEW_CLIENT_"); // will be a json. //should get rid of this line.
+		ws_conn.send(JSON.stringify(json_msg)); // will be a json.
 
 		_RECEIVED_.innerHTML += ("<p>Connection Opened.</p>");
 	};

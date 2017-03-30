@@ -3,6 +3,15 @@
 // 不光要思考架构，还要思考架构的迭代与演化。
 // 要牢记：软件是长出来的。
 
+//CODE_COMPLETE:
+// - Msg.toJSON
+// - Msg.parseJSON
+// - break Node.run into Node.listenToUser & Node.listenToCenter.
+// --all TODOs & FIXMEs
+// - documentation: on business logic.
+// - +++show the number of onliner.
+// - show the previous messages when initialize.
+
 package main
 
 import "fmt"
@@ -25,25 +34,28 @@ func newMsg(source_node *Node) *Msg {
 }
 
 func (M *Msg) setDescription(description string) *Msg {
-	M.description = description
+	M.description = html.EscapeString(description)
 	return M
 }
 
 func (M *Msg) setContent(content []string) *Msg {
-	M.content = content
+	M.content = html.EscapeString(content)
 	return M
 }
 
 //Pay attention to the probobaly-appear errors.
-func (M *Msg) parseJSON(json_raw string) (string, []string, error) {
+//use re2.
+func (M *Msg) parseJSON(json_raw string) error {
 	var description string
 	var content []string
 	var no_error bool
 	//parse:
 	if no_error {
-		return description, content, nil
+		M.setDescription(description)
+		M.setContent(content)
+		return nil
 	} else {
-		return "", nil, Msg{
+		return Msg{
 			source_node: nil,
 			description: "error",
 			content: []string{
@@ -54,7 +66,7 @@ func (M *Msg) parseJSON(json_raw string) (string, []string, error) {
 }
 
 //This method transforms the Msg::M to JSON string.
-func (M *Msg) jsonify() string {
+func (M *Msg) toJSON() string {
 	return ""
 }
 
@@ -97,6 +109,7 @@ func (N *Node) run(ifexit chan<- bool) {
 				return
 			}
 			//check the content that client sent,
+			//TODO#1 - parse str_msg_cx to a type-Msg instance.
 			fmt.Println(
 				"received msg from client:\n\t",
 				str_msg_cx,
@@ -104,6 +117,7 @@ func (N *Node) run(ifexit chan<- bool) {
 				html.EscapeString(str_msg_cx),
 			)
 			//and push it to center.
+			//TODO#2 - improve this msg.
 			N.c_ptr.msg_queue <- Msg{
 				source_node: N,
 				description: "user-msg",
@@ -119,7 +133,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			case msg := <-N.msg_from_center:
 				N.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg.content[0]), //msg.jsonify()
+					[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
 				)
 			}
 		}
@@ -202,6 +216,7 @@ func (C *Center) run() {
 			//if any of the node sends message,
 			//then the center will boardcast it
 			//back to all of the nodes.
+			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
 			C.boardcast(Msg{
 				source_node: nil,
 				content:     msg.content,

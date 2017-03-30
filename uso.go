@@ -1,5 +1,7 @@
 // USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
 // USE SLICE EVERYWHERE - DO NOT USE container/list.
+// 不光要思考架构，还要思考架构的迭代与演化。
+// 要牢记：软件是长出来的。
 
 package main
 
@@ -15,15 +17,50 @@ type Msg struct {
 	//else it is from center to node.
 	source_node *Node
 	description string
-	content     string
+	content     []string
 }
 
-func (M *Msg) jsonlify() {
+func newMsg(source_node *Node) *Msg {
+	return nil
 }
 
-func (M *Msg) Error() string {
-	if M.description == "error" {
-		return M.content
+func (M *Msg) setDescription(description string) *Msg {
+	M.description = description
+	return M
+}
+
+func (M *Msg) setContent(content []string) *Msg {
+	M.content = content
+	return M
+}
+
+//Pay attention to the probobaly-appear errors.
+func (M *Msg) parseJSON(json_raw string) (string, []string, error) {
+	var description string
+	var content []string
+	var no_error bool
+	//parse:
+	if no_error {
+		return description, content, nil
+	} else {
+		return "", nil, Msg{
+			source_node: nil,
+			description: "error",
+			content: []string{
+				"parseJSON: invalid json form.",
+			},
+		}
+	}
+}
+
+//This method transforms the Msg::M to JSON string.
+func (M *Msg) jsonify() string {
+	return ""
+}
+
+func (M Msg) Error() string {
+	if M.description == "error" && M.content != nil && len(M.content) != 0 {
+		return M.content[0]
 	}
 	return ""
 }
@@ -43,13 +80,15 @@ func (N *Node) run(ifexit chan<- bool) {
 	fmt.Println("node::Run()")
 	go func() {
 		//listener
-		//var msg_type int
+		//This goroutine receive msgs in the form of JSON from client.
 		var msg_cx []byte
 		var err error
+		var str_msg_cx string
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
 			_, msg_cx, err = N.conn.ReadMessage()
+			str_msg_cx = string(msg_cx[:])
 			if err != nil {
 				//the client was closed.
 				fmt.Println("-close-client-")
@@ -58,23 +97,17 @@ func (N *Node) run(ifexit chan<- bool) {
 				return
 			}
 			//check the content that client sent,
+			fmt.Println(
+				"received msg from client:\n\t",
+				str_msg_cx,
+				"\n\t",
+				html.EscapeString(str_msg_cx),
+			)
 			//and push it to center.
-			if string(msg_cx[:]) == "_NEW_CLIENT_" {
-				fmt.Println("-new-client-")
-				//code for pushing goes here...
-			} else {
-				//other message...
-				str_msg_cx := html.EscapeString(string(msg_cx[:]))
-				fmt.Println(
-					"received msg from client:",
-					str_msg_cx,
-				)
-				//code for pushing goes here...
-				N.c_ptr.msg_queue <- Msg{
-					source_node: N,
-					content:     str_msg_cx,
-				}
-
+			N.c_ptr.msg_queue <- Msg{
+				source_node: N,
+				description: "user-msg",
+				content:     []string{str_msg_cx},
 			}
 		}
 	}()
@@ -86,7 +119,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			case msg := <-N.msg_from_center:
 				N.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg.content),
+					[]byte(msg.content[0]), //msg.jsonify()
 				)
 			}
 		}
@@ -102,6 +135,7 @@ func (N *Node) run(ifexit chan<- bool) {
 
 type Center struct {
 	msg_queue chan Msg
+	user_msgs []*Msg
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
 }
@@ -110,6 +144,7 @@ func newCenter() *Center {
 	fmt.Println("newCenter()")
 	return &Center{
 		msg_queue: make(chan Msg),
+		user_msgs: *new([]*Msg),
 		nodes:     *new([]*Node),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,

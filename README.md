@@ -1,4 +1,4 @@
-#USO - Rewrite
+# USO - Rewrite
 
 Uso is a simple online chatting platfrom.
 It is in developing, so it's still cannot
@@ -22,7 +22,7 @@ by using WebSocket.
 
 ### Features
 
-```
+
 [Client] <-- JSON --> [Node]
 [Client] <-- JSON --> [Node]
 
@@ -33,7 +33,6 @@ by using WebSocket.
                 (Msg)  |  |  (Msg)
                        V  |
                      [Center]
-```
 
 ### Modules
 
@@ -50,14 +49,16 @@ The dependent package(s) is/are:
 
 	The Types will be named in a single word with Capital Initial.
 	(So the name of the type must has only one word.)
-	eg:```
-		type Node struct {...}
-		type Center struct {...}
-	```
+	eg:
+```Go
+type Node struct {...}
+type Center struct {...}
+```
 
 	The methods and the constructors will be coded in camelStyle.
 	Use as more than one word as possible.
-	eg:```
+	eg:
+	```Go
 		func newCenter () *Center
 		func (C *Center) newNode () *Node
 		func (c *Center) boardcast () error
@@ -67,7 +68,8 @@ The dependent package(s) is/are:
 	The tool functions (utilities) will be named in canmelStyle,
 	with a underscore prefix (stands for its father-class is ```_```,
 	except for main function).
-	eg:```
+	eg:
+	```
 		func _strToMsg (source string) ([]byte, err)
 	```
 

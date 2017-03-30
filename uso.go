@@ -97,25 +97,17 @@ func (N *Node) run(ifexit chan<- bool) {
 				return
 			}
 			//check the content that client sent,
+			fmt.Println(
+				"received msg from client:\n\t",
+				str_msg_cx,
+				"\n\t",
+				html.EscapeString(str_msg_cx),
+			)
 			//and push it to center.
-			if str_msg_cx == "_NEW_CLIENT_" {
-				fmt.Println("-new-client-")
-				//code for pushing goes here...
-			} else {
-				//other message...
-				fmt.Println(
-					"received msg from client:",
-					str_msg_cx,
-					"\n",
-					html.EscapeString(str_msg_cx),
-				)
-				//str_msg_cx := html.EscapeString(str_msg_cx)
-				//code for pushing goes here...
-				N.c_ptr.msg_queue <- Msg{
-					source_node: N,
-					description: "user-msg",
-					content:     []string{str_msg_cx},
-				}
+			N.c_ptr.msg_queue <- Msg{
+				source_node: N,
+				description: "user-msg",
+				content:     []string{str_msg_cx},
 			}
 		}
 	}()

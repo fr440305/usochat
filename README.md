@@ -22,7 +22,7 @@ by using WebSocket.
 
 ### Features
 
-
+```
 [Client] <-- JSON --> [Node]
 [Client] <-- JSON --> [Node]
 
@@ -33,6 +33,7 @@ by using WebSocket.
                 (Msg)  |  |  (Msg)
                        V  |
                      [Center]
+```
 
 ### Modules
 
@@ -47,53 +48,54 @@ The dependent package(s) is/are:
 
 ## Code Style
 
-	The Types will be named in a single word with Capital Initial.
-	(So the name of the type must has only one word.)
-	eg:
+The Types will be named in a single word with Capital Initial.
+(So the name of the type must has only one word.)
+eg:
+
 ```Go
 type Node struct {...}
 type Center struct {...}
 ```
 
-	The methods and the constructors will be coded in camelStyle.
-	Use as more than one word as possible.
-	eg:
-	```Go
-		func newCenter () *Center
-		func (C *Center) newNode () *Node
-		func (c *Center) boardcast () error
-		func (n *Node) sendMsgToCenter () error
-	```
+The methods and the constructors will be coded in camelStyle.
+Use as more than one word as possible.
+eg:
+```Go
+func newCenter () *Center
+func (C *Center) newNode () *Node
+func (c *Center) boardcast () error
+func (n *Node) sendMsgToCenter () error
+```
 
-	The tool functions (utilities) will be named in canmelStyle,
-	with a underscore prefix (stands for its father-class is ```_```,
-	except for main function).
-	eg:
-	```
-		func _strToMsg (source string) ([]byte, err)
-	```
+The tool functions (utilities) will be named in canmelStyle,
+with a underscore prefix (stands for its father-class is ```_```,
+except for main function).
+eg:
+```
+func _strToMsg (source string) ([]byte, err)
+```
 
-	The variables inside the function or method will be named
-	in underscore style. Only lowercase.
-	eg:```
-		func (S *Sample) showExample () {
-			var sample_var = 0
-			var no_uppercase_letter = 9
-			fmt.Prinln(sample_var, no_uppercase_letter)
-		}
-	```
+The variables inside the function or method will be named
+in underscore style. Only lowercase.
+eg:```
+func (S *Sample) showExample () {
+	var sample_var = 0
+	var no_uppercase_letter = 9
+	fmt.Prinln(sample_var, no_uppercase_letter)
+}
+```
 
-	The constants will be named ALL_UPPERCASE style. Use more than
-	one word as possible.
-	eg:```
-		const ONEWORD = 0
-		const ALL_UPPERCASE = 8
-	```
+The constants will be named ALL_UPPERCASE style. Use more than
+one word as possible.
+eg:```
+const ONEWORD = 0
+const ALL_UPPERCASE = 8
+```
 
 
 ## Author
 
-	FireRain :=: 火雨
-	email: fr440305@gmail.com
+FireRain :=: 火雨
+email: fr440305@gmail.com
 
 

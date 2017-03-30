@@ -17,16 +17,40 @@ type Msg struct {
 	//else it is from center to node.
 	source_node *Node
 	description string
-	content     []string //TODO - will be a slice
+	content     []string
 }
 
-func newMsg() *Msg {
+func newMsg(source_node *Node) *Msg {
 	return nil
 }
 
-//This method parse json string and change it into Msg::M.
-func (M *Msg) parseJSON(json_raw string) *Msg {
+func (M *Msg) setDescription(description string) *Msg {
+	M.description = description
 	return M
+}
+
+func (M *Msg) setContent(content []string) *Msg {
+	M.content = content
+	return M
+}
+
+//Pay attention to the probobaly-appear errors.
+func (M *Msg) parseJSON(json_raw string) (string, []string, error) {
+	var description string
+	var content []string
+	var no_error bool
+	//parse:
+	if no_error {
+		return description, content, nil
+	} else {
+		return "", nil, Msg{
+			source_node: nil,
+			description: "error",
+			content: []string{
+				"parseJSON: invalid json form.",
+			},
+		}
+	}
 }
 
 //This method transforms the Msg::M to JSON string.
@@ -34,8 +58,8 @@ func (M *Msg) jsonify() string {
 	return ""
 }
 
-func (M *Msg) Error() string {
-	if M.description == "error" && M != nil {
+func (M Msg) Error() string {
+	if M.description == "error" && M.content != nil && len(M.content) != 0 {
 		return M.content[0]
 	}
 	return ""
@@ -82,6 +106,7 @@ func (N *Node) run(ifexit chan<- bool) {
 				fmt.Println(
 					"received msg from client:",
 					str_msg_cx,
+					"\n",
 					html.EscapeString(str_msg_cx),
 				)
 				//str_msg_cx := html.EscapeString(str_msg_cx)
@@ -102,7 +127,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			case msg := <-N.msg_from_center:
 				N.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg.content[0]),
+					[]byte(msg.content[0]), //msg.jsonify()
 				)
 			}
 		}

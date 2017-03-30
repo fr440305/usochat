@@ -17,7 +17,11 @@ type Msg struct {
 	//else it is from center to node.
 	source_node *Node
 	description string
-	content     string //TODO - will be a slice
+	content     []string //TODO - will be a slice
+}
+
+func newMsg() *Msg {
+	return nil
 }
 
 //This method parse json string and change it into Msg::M.
@@ -27,11 +31,12 @@ func (M *Msg) parseJSON(json_raw string) *Msg {
 
 //This method transforms the Msg::M to JSON string.
 func (M *Msg) jsonify() string {
+	return ""
 }
 
 func (M *Msg) Error() string {
-	if M.description == "error" {
-		return M.content
+	if M.description == "error" && M != nil {
+		return M.content[0]
 	}
 	return ""
 }
@@ -83,7 +88,8 @@ func (N *Node) run(ifexit chan<- bool) {
 				//code for pushing goes here...
 				N.c_ptr.msg_queue <- Msg{
 					source_node: N,
-					content:     str_msg_cx,
+					description: "user-msg",
+					content:     []string{str_msg_cx},
 				}
 			}
 		}
@@ -96,7 +102,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			case msg := <-N.msg_from_center:
 				N.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg.content),
+					[]byte(msg.content[0]),
 				)
 			}
 		}

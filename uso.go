@@ -29,7 +29,11 @@ type Msg struct {
 }
 
 func newMsg(source_node *Node) *Msg {
-	return nil
+	return &Msg{
+		source_node: source_node,
+		description: "",
+		content:     []string{},
+	}
 }
 
 func (M *Msg) setDescription(description string) *Msg {
@@ -48,6 +52,16 @@ func (M *Msg) setContent(content []string) *Msg {
 //Pay attention to the probobaly-appear errors.
 //use re2.
 func (M *Msg) parseJSON(json_raw string) error {
+	var user_msg struct {
+		SouceNode   string   `json:"source_node"`
+		Description string   `json:"description"`
+		Content     []string `json:"content"`
+	}
+	json.Unmarshal([]byte(json_raw), &user_msg)
+	fmt.Println("Msg.parseJSON", user_msg)
+	M.setDescription(user_msg.Description)
+	M.setContent(user_msg.Content)
+	fmt.Println("Msg.parseJSOn - end.")
 	return nil
 }
 
@@ -82,6 +96,7 @@ func (N *Node) run(ifexit chan<- bool) {
 		var msg_cx []byte
 		var err error
 		var str_msg_cx string
+		var msg_to_center *Msg
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
@@ -95,17 +110,18 @@ func (N *Node) run(ifexit chan<- bool) {
 				return
 			}
 			//check the content that client sent,
-			//TODO#1 - parse str_msg_cx to a type-Msg instance.
 			fmt.Println(
 				"received msg from client:\n\t",
 				str_msg_cx,
 				"\n\t",
 				html.EscapeString(str_msg_cx),
 			)
-			//and push it to center.
-			//TODO#2 - improve this msg.
-			var msg_to_center = newMsg(N)
+			msg_to_center = newMsg(N)
+			fmt.Println(msg_to_center)
+			//TODO - check the error:
 			msg_to_center.parseJSON(str_msg_cx)
+			//and push it to center.
+			//TODO - change this msg:
 			N.c_ptr.msg_queue <- Msg{
 				source_node: N,
 				description: "user-msg",

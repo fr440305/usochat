@@ -18,8 +18,7 @@ import "fmt"
 import "html"
 import "net/http"
 import "github.com/gorilla/websocket"
-
-//import "strconv"
+import "encoding/json"
 
 type Msg struct {
 	//If source_node != nil then it is a message from node to center.
@@ -39,30 +38,17 @@ func (M *Msg) setDescription(description string) *Msg {
 }
 
 func (M *Msg) setContent(content []string) *Msg {
-	M.content = html.EscapeString(content)
+	for i, str := range content {
+		content[i] = html.EscapeString(str)
+	}
+	M.content = content
 	return M
 }
 
 //Pay attention to the probobaly-appear errors.
 //use re2.
 func (M *Msg) parseJSON(json_raw string) error {
-	var description string
-	var content []string
-	var no_error bool
-	//parse:
-	if no_error {
-		M.setDescription(description)
-		M.setContent(content)
-		return nil
-	} else {
-		return Msg{
-			source_node: nil,
-			description: "error",
-			content: []string{
-				"parseJSON: invalid json form.",
-			},
-		}
-	}
+	return nil
 }
 
 //This method transforms the Msg::M to JSON string.
@@ -118,6 +104,8 @@ func (N *Node) run(ifexit chan<- bool) {
 			)
 			//and push it to center.
 			//TODO#2 - improve this msg.
+			var msg_to_center = newMsg(N)
+			msg_to_center.parseJSON(str_msg_cx)
 			N.c_ptr.msg_queue <- Msg{
 				source_node: N,
 				description: "user-msg",

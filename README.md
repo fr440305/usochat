@@ -71,14 +71,14 @@ The tool functions (utilities) will be named in canmelStyle,
 with a underscore prefix (stands for its father-class is ```_```,
 except for main function).
 eg:
-```
+```Go
 func _strToMsg (source string) ([]byte, err)
 ```
 
 The variables inside the function or method will be named
 in underscore style. Only lowercase.
 eg:
-```
+```Go
 func (S *Sample) showExample () {
 	var sample_var = 0
 	var no_uppercase_letter = 9
@@ -89,7 +89,7 @@ func (S *Sample) showExample () {
 The constants will be named ALL_UPPERCASE style. Use more than
 one word as possible.
 eg:
-```
+```Go
 const ONEWORD = 0
 const ALL_UPPERCASE = 8
 ```

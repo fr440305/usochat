@@ -3,14 +3,22 @@
 // 不光要思考架构，还要思考架构的迭代与演化。
 // 要牢记：软件是长出来的。
 
+//CODE_COMPLETE:
+// - Msg.toJSON
+// - Msg.parseJSON
+// - break Node.run into Node.listenToUser & Node.listenToCenter.
+// --all TODOs & FIXMEs
+// - documentation: on business logic.
+// - +++show the number of onliner.
+// - show the previous messages when initialize.
+
 package main
 
 import "fmt"
 import "html"
 import "net/http"
 import "github.com/gorilla/websocket"
-
-//import "strconv"
+import "encoding/json"
 
 type Msg struct {
 	//If source_node != nil then it is a message from node to center.
@@ -21,40 +29,44 @@ type Msg struct {
 }
 
 func newMsg(source_node *Node) *Msg {
-	return nil
+	return &Msg{
+		source_node: source_node,
+		description: "",
+		content:     []string{},
+	}
 }
 
 func (M *Msg) setDescription(description string) *Msg {
-	M.description = description
+	M.description = html.EscapeString(description)
 	return M
 }
 
 func (M *Msg) setContent(content []string) *Msg {
+	for i, str := range content {
+		content[i] = html.EscapeString(str)
+	}
 	M.content = content
 	return M
 }
 
 //Pay attention to the probobaly-appear errors.
-func (M *Msg) parseJSON(json_raw string) (string, []string, error) {
-	var description string
-	var content []string
-	var no_error bool
-	//parse:
-	if no_error {
-		return description, content, nil
-	} else {
-		return "", nil, Msg{
-			source_node: nil,
-			description: "error",
-			content: []string{
-				"parseJSON: invalid json form.",
-			},
-		}
+//use re2.
+func (M *Msg) parseJSON(json_raw string) error {
+	var user_msg struct {
+		SouceNode   string   `json:"source_node"`
+		Description string   `json:"description"`
+		Content     []string `json:"content"`
 	}
+	json.Unmarshal([]byte(json_raw), &user_msg)
+	fmt.Println("Msg.parseJSON", user_msg)
+	M.setDescription(user_msg.Description)
+	M.setContent(user_msg.Content)
+	fmt.Println("Msg.parseJSOn - end.")
+	return nil
 }
 
 //This method transforms the Msg::M to JSON string.
-func (M *Msg) jsonify() string {
+func (M *Msg) toJSON() string {
 	return ""
 }
 
@@ -84,6 +96,7 @@ func (N *Node) run(ifexit chan<- bool) {
 		var msg_cx []byte
 		var err error
 		var str_msg_cx string
+		var msg_to_center *Msg
 		for {
 			//the code will be blocked here:
 			//but don't worry, becase it's in the go statment.
@@ -103,7 +116,12 @@ func (N *Node) run(ifexit chan<- bool) {
 				"\n\t",
 				html.EscapeString(str_msg_cx),
 			)
+			msg_to_center = newMsg(N)
+			fmt.Println(msg_to_center)
+			//TODO - check the error:
+			msg_to_center.parseJSON(str_msg_cx)
 			//and push it to center.
+			//TODO - change this msg:
 			N.c_ptr.msg_queue <- Msg{
 				source_node: N,
 				description: "user-msg",
@@ -119,7 +137,7 @@ func (N *Node) run(ifexit chan<- bool) {
 			case msg := <-N.msg_from_center:
 				N.conn.WriteMessage(
 					websocket.TextMessage,
-					[]byte(msg.content[0]), //msg.jsonify()
+					[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
 				)
 			}
 		}
@@ -202,6 +220,7 @@ func (C *Center) run() {
 			//if any of the node sends message,
 			//then the center will boardcast it
 			//back to all of the nodes.
+			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
 			C.boardcast(Msg{
 				source_node: nil,
 				content:     msg.content,

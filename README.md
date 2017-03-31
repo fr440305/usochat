@@ -1,8 +1,8 @@
-# USO - Rewrite
+# USO - Rewrite - prelease.
 
 Uso is a simple online chatting platfrom.
-It is in developing, so it's still cannot
-be used yet.
+You can go to (here)[http://45.118.135.218:9999/]
+to try, but it does not work all the time.
 
 ## Prog Construction
 
@@ -43,7 +43,8 @@ by using WebSocket.
 
 The dependent package(s) is/are:
 
--	github.com/gorilla/websocket (An implementation of WebSocket in Golang.)
+-	github.com/gorilla/websocket
+--	An implementation of WebSocket in Golang.
 
 
 ## Code Style

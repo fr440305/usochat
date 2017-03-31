@@ -5,7 +5,6 @@
 
 //CODE_COMPLETE:
 // - Msg.toJSON
-// - Msg.parseJSON
 // - break Node.run into Node.listenToUser & Node.listenToCenter.
 // --all TODOs & FIXMEs
 // - documentation: on business logic.

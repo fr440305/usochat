@@ -54,7 +54,7 @@ if (window.WebSocket != undefined) {
 	_TEST_.innerHTML += "<p> +++ client-WebSocket </p>";
 	ws_conn.onopen = function () {
 		var json_msg = {
-			"source-node":"",
+			"source_node":"",
 			"description":"user-login",
 			"content":[]
 		};
@@ -93,7 +93,7 @@ if (window.WebSocket != undefined) {
 	};
 	_SEND_CONFIRM_.onclick = function () {
 		var json_msg = {
-			"source-node":"",
+			"source_node":"",
 			"description":"user-msg-text",
 			"content":[]
 		};

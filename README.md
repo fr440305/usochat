@@ -77,7 +77,8 @@ func _strToMsg (source string) ([]byte, err)
 
 The variables inside the function or method will be named
 in underscore style. Only lowercase.
-eg:```
+eg:
+```
 func (S *Sample) showExample () {
 	var sample_var = 0
 	var no_uppercase_letter = 9
@@ -87,7 +88,8 @@ func (S *Sample) showExample () {
 
 The constants will be named ALL_UPPERCASE style. Use more than
 one word as possible.
-eg:```
+eg:
+```
 const ONEWORD = 0
 const ALL_UPPERCASE = 8
 ```

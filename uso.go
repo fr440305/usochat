@@ -150,7 +150,7 @@ func (N *Node) listenToCenter() {
 			fmt.Println("Node.handleCenter", json_to_user)
 			N.conn.WriteMessage(
 				websocket.TextMessage,
-				[]byte(json_to_user), //FIXME#1 - msg.toJSON()
+				[]byte(json_to_user),
 			)
 		}
 	}
@@ -241,7 +241,6 @@ func (C *Center) handleNodes() {
 			//if any of the node sends message,
 			//then the center will boardcast it
 			//back to all of the nodes.
-			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
 			fmt.Println("Center.handleNodes", "---", msg.source_node)
 			fmt.Println("Center.handleNodes", "---", msg.description)
 			fmt.Println("Center.handleNodes", "---", msg.content)
@@ -253,8 +252,7 @@ func (C *Center) handleNodes() {
 }
 
 //return the number of people online:
-func (C *Center) getOnliner() int {
-	fmt.Println("center::GetOnliner()", C.nodes)
+func (C *Center) getOnliner(return_type string) int {
 	return len(C.nodes)
 }
 

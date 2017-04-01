@@ -40,11 +40,14 @@ func (M *Msg) setDescription(description string) *Msg {
 	return M
 }
 
+//FIXME - it does not works.
 func (M *Msg) setContent(content []string) *Msg {
 	for i, str := range content {
 		content[i] = html.EscapeString(str)
+		fmt.Println("Msg.setContent", content[i])
 	}
 	M.content = content
+	fmt.Println("Msg.setContent", content)
 	return M
 }
 
@@ -57,9 +60,9 @@ func (M *Msg) parseJSON(json_raw string) error {
 		Content     []string `json:"content"`
 	}
 	json.Unmarshal([]byte(json_raw), &user_msg)
-	fmt.Println("Msg.parseJSON", user_msg)
 	M.setDescription(user_msg.Description)
 	M.setContent(user_msg.Content)
+	fmt.Println("Msg.parseJSON", user_msg)
 	fmt.Println("Msg.parseJSOn - end.")
 	return nil
 }

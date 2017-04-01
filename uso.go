@@ -190,8 +190,9 @@ func newCenter() *Center {
 	fmt.Println("newCenter()")
 	return &Center{
 		msg_queue: make(chan Msg),
-		dialogs:   *new([]*Msg),
-		nodes:     *new([]*Node),
+		dialogs:   []*Msg{},
+		//dialogs:   *new([]*Msg),
+		nodes: []*Node{},
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,

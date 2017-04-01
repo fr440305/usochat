@@ -258,6 +258,7 @@ func (C *Center) handleNodes() {
 			//check:
 			rec_msg_desp = receive_msg.description
 			if rec_msg_desp == "user-login" {
+				chat_hist = []string{}
 				for _, prev_msg := range C.dialogs {
 					fmt.Println("Center.handleNodes", chat_hist)
 					chat_hist = append(chat_hist, prev_msg.content[:]...)

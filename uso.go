@@ -27,11 +27,12 @@ type Msg struct {
 }
 
 func newMsg(source_node *Node) *Msg {
-	return &Msg{
-		source_node: source_node,
-		description: "",
-		content:     []string{},
-	}
+	var res = new(Msg)
+	res.source_node = source_node
+	res.description = ""
+	res.content = []string{}
+	fmt.Println("newMsg", res)
+	return res
 }
 
 func (M *Msg) setDescription(description string) *Msg {
@@ -65,9 +66,26 @@ func (M *Msg) parseJSON(json_raw string) error {
 	return nil
 }
 
+//TODO - check error
 //This method transforms the Msg::M to JSON string.
 func (M *Msg) toJSON() string {
-	return ""
+	var res []byte
+	var err error
+	fmt.Println("Msg.toJSON", "begin")
+	var user_msg = struct {
+		SouceNode   string   `json:"source_node"`
+		Description string   `json:"description"`
+		Content     []string `json:"content"`
+	}{M.source_node.iden, M.description, M.content}
+	fmt.Println("Msg.toJSON", user_msg)
+	res, err = json.Marshal(user_msg)
+	if err != nil {
+		//TODO - error handler goes here...
+	}
+	fmt.Println("Msg.toJSON", user_msg)
+	fmt.Println("Msg.toJSOn - end.", string(res))
+	return string(res)
+	//return `{"content":["toJSON","toJSON"]}`
 }
 
 func (M Msg) Error() string {
@@ -82,18 +100,18 @@ type Node struct {
 	msg_from_center chan Msg
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
-	index           int64           // The index of this node in Center.nodes.
+	iden            string          // the identification for node.
 }
 
-func (N *Node) handleUser(ifexit chan<- bool) {
+func (N *Node) listenToUser(ifexit chan<- bool) {
 	//listener
 	//This goroutine receive msgs in the form of JSON from client.
-	var msg_cx []byte
 	var err error
-	var str_msg_cx string
-	var msg_to_center *Msg
+	var msg_cx []byte      // the byte array from user.
+	var str_msg_cx string  // the conversion for byte array.
+	var msg_to_center *Msg // the message that needs to send to center.
 	for {
-		//the code will be blocked here:
+		//the code will be blocked here(conn.ReadMessage():
 		//but don't worry, becase it's in the go statment.
 		_, msg_cx, err = N.conn.ReadMessage()
 		str_msg_cx = string(msg_cx[:])
@@ -112,28 +130,29 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 			html.EscapeString(str_msg_cx),
 		)
 		msg_to_center = newMsg(N)
-		fmt.Println(msg_to_center)
 		//TODO - check the error:
 		msg_to_center.parseJSON(str_msg_cx)
+		fmt.Println("Node.handleUser", "msgtocenter", msg_to_center.description)
 		//and push it to center.
 		//TODO - change this msg:
-		N.c_ptr.msg_queue <- Msg{
-			source_node: N,
-			description: "user-msg",
-			content:     []string{str_msg_cx},
-		}
+		fmt.Println("Node.handleUser", *msg_to_center)
+		N.c_ptr.msg_queue <- *msg_to_center
 	}
 }
 
-func (N *Node) handleCenter() {
+func (N *Node) listenToCenter() {
 	//responser
 	//fetch the msg from center, and send it to client.
+	var json_to_user string
 	for {
 		select {
 		case msg := <-N.msg_from_center:
+			msg.source_node = N
+			json_to_user = msg.toJSON()
+			fmt.Println("Node.handleCenter", json_to_user)
 			N.conn.WriteMessage(
 				websocket.TextMessage,
-				[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
+				[]byte(json_to_user), //FIXME#1 - msg.toJSON()
 			)
 		}
 	}
@@ -143,8 +162,8 @@ func (N *Node) handleCenter() {
 func (N *Node) run(ifexit chan<- bool) {
 	//var err error
 	var if_listener_exit = make(chan bool)
-	go N.handleUser(if_listener_exit)
-	go N.handleCenter()
+	go N.listenToUser(if_listener_exit)
+	go N.listenToCenter()
 	fmt.Println("node::Run()")
 	select {
 	case <-if_listener_exit:
@@ -225,10 +244,12 @@ func (C *Center) handleNodes() {
 			//then the center will boardcast it
 			//back to all of the nodes.
 			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
-			C.boardcast(Msg{
-				source_node: nil,
-				content:     msg.content,
-			})
+			fmt.Println("Center.handleNodes", "---", msg.source_node)
+			fmt.Println("Center.handleNodes", "---", msg.description)
+			fmt.Println("Center.handleNodes", "---", msg.content)
+			msg.source_node = nil
+			C.boardcast(msg)
+			fmt.Println("Center.handleNodes", "888")
 		}
 	}
 }

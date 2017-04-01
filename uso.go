@@ -4,9 +4,6 @@
 // 要牢记：软件是长出来的。
 
 //CODE_COMPLETE:
-// - Msg.toJSON
-// - Msg.parseJSON
-// - break Node.run into Node.listenToUser & Node.listenToCenter.
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
 // - +++show the number of onliner.
@@ -29,11 +26,12 @@ type Msg struct {
 }
 
 func newMsg(source_node *Node) *Msg {
-	return &Msg{
-		source_node: source_node,
-		description: "",
-		content:     []string{},
-	}
+	var res = new(Msg)
+	res.source_node = source_node
+	res.description = ""
+	res.content = []string{}
+	fmt.Println("newMsg", res)
+	return res
 }
 
 func (M *Msg) setDescription(description string) *Msg {
@@ -44,8 +42,10 @@ func (M *Msg) setDescription(description string) *Msg {
 func (M *Msg) setContent(content []string) *Msg {
 	for i, str := range content {
 		content[i] = html.EscapeString(str)
+		fmt.Println("Msg.setContent", content[i])
 	}
 	M.content = content
+	fmt.Println("Msg.setContent", content)
 	return M
 }
 
@@ -58,16 +58,33 @@ func (M *Msg) parseJSON(json_raw string) error {
 		Content     []string `json:"content"`
 	}
 	json.Unmarshal([]byte(json_raw), &user_msg)
-	fmt.Println("Msg.parseJSON", user_msg)
 	M.setDescription(user_msg.Description)
 	M.setContent(user_msg.Content)
+	fmt.Println("Msg.parseJSON", user_msg)
 	fmt.Println("Msg.parseJSOn - end.")
 	return nil
 }
 
+//TODO - check error
 //This method transforms the Msg::M to JSON string.
 func (M *Msg) toJSON() string {
-	return ""
+	var res []byte
+	var err error
+	fmt.Println("Msg.toJSON", "begin")
+	var user_msg = struct {
+		SouceNode   string   `json:"source_node"`
+		Description string   `json:"description"`
+		Content     []string `json:"content"`
+	}{M.source_node.iden, M.description, M.content}
+	fmt.Println("Msg.toJSON", user_msg)
+	res, err = json.Marshal(user_msg)
+	if err != nil {
+		//TODO - error handler goes here...
+	}
+	fmt.Println("Msg.toJSON", user_msg)
+	fmt.Println("Msg.toJSOn - end.", string(res))
+	return string(res)
+	//return `{"content":["toJSON","toJSON"]}`
 }
 
 func (M Msg) Error() string {
@@ -82,66 +99,70 @@ type Node struct {
 	msg_from_center chan Msg
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
-	index           int64           // The index of this node in Center.nodes.
+	iden            string          // the identification for node.
+}
+
+func (N *Node) listenToUser(ifexit chan<- bool) {
+	//listener
+	//This goroutine receive msgs in the form of JSON from client.
+	var err error
+	var msg_cx []byte      // the byte array from user.
+	var str_msg_cx string  // the conversion for byte array.
+	var msg_to_center *Msg // the message that needs to send to center.
+	for {
+		//the code will be blocked here(conn.ReadMessage():
+		//but don't worry, becase it's in the go statment.
+		_, msg_cx, err = N.conn.ReadMessage()
+		str_msg_cx = string(msg_cx[:])
+		if err != nil {
+			//the client was closed.
+			fmt.Println("-close-client-")
+			N.c_ptr.removeNode(N)
+			ifexit <- true
+			return
+		}
+		//check the content that client sent,
+		fmt.Println(
+			"received msg from client:\n\t",
+			str_msg_cx,
+			"\n\t",
+			html.EscapeString(str_msg_cx),
+		)
+		msg_to_center = newMsg(N)
+		//TODO - check the error:
+		msg_to_center.parseJSON(str_msg_cx)
+		fmt.Println("Node.handleUser", "msgtocenter", msg_to_center.description)
+		//and push it to center.
+		fmt.Println("Node.handleUser", *msg_to_center)
+		N.c_ptr.msg_queue <- *msg_to_center
+	}
+}
+
+func (N *Node) listenToCenter() {
+	//responser
+	//fetch the msg from center, and send it to client.
+	var json_to_user string
+	for {
+		select {
+		case msg := <-N.msg_from_center:
+			msg.source_node = N
+			json_to_user = msg.toJSON()
+			fmt.Println("Node.handleCenter", json_to_user)
+			N.conn.WriteMessage(
+				websocket.TextMessage,
+				[]byte(json_to_user), //FIXME#1 - msg.toJSON()
+			)
+		}
+	}
 }
 
 //use go statment to call this func
 func (N *Node) run(ifexit chan<- bool) {
 	//var err error
 	var if_listener_exit = make(chan bool)
+	go N.listenToUser(if_listener_exit)
+	go N.listenToCenter()
 	fmt.Println("node::Run()")
-	go func() {
-		//listener
-		//This goroutine receive msgs in the form of JSON from client.
-		var msg_cx []byte
-		var err error
-		var str_msg_cx string
-		var msg_to_center *Msg
-		for {
-			//the code will be blocked here:
-			//but don't worry, becase it's in the go statment.
-			_, msg_cx, err = N.conn.ReadMessage()
-			str_msg_cx = string(msg_cx[:])
-			if err != nil {
-				//the client was closed.
-				fmt.Println("-close-client-")
-				N.c_ptr.removeNode(N)
-				if_listener_exit <- true
-				return
-			}
-			//check the content that client sent,
-			fmt.Println(
-				"received msg from client:\n\t",
-				str_msg_cx,
-				"\n\t",
-				html.EscapeString(str_msg_cx),
-			)
-			msg_to_center = newMsg(N)
-			fmt.Println(msg_to_center)
-			//TODO - check the error:
-			msg_to_center.parseJSON(str_msg_cx)
-			//and push it to center.
-			//TODO - change this msg:
-			N.c_ptr.msg_queue <- Msg{
-				source_node: N,
-				description: "user-msg",
-				content:     []string{str_msg_cx},
-			}
-		}
-	}()
-	go func() {
-		//responser
-		//fetch the msg from center, and send it to client.
-		for {
-			select {
-			case msg := <-N.msg_from_center:
-				N.conn.WriteMessage(
-					websocket.TextMessage,
-					[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
-				)
-			}
-		}
-	}()
 	select {
 	case <-if_listener_exit:
 		//if the listener exit, then the whole node will exit.
@@ -153,7 +174,7 @@ func (N *Node) run(ifexit chan<- bool) {
 
 type Center struct {
 	msg_queue chan Msg
-	user_msgs []*Msg
+	user_msgs []*Msg // chatting history
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
 }
@@ -173,8 +194,8 @@ func newCenter() *Center {
 
 func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
-	fmt.Println("center::newNode()")
 	var res = new(Node)
+	fmt.Println("center::newNode()")
 	res.msg_from_center = make(chan Msg) //string
 	res.c_ptr = C
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)
@@ -213,7 +234,7 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 
 //listen and handle the msg.
 //use go statment to call this func.
-func (C *Center) run() {
+func (C *Center) handleNodes() {
 	for {
 		select {
 		case msg := <-C.msg_queue:
@@ -221,10 +242,12 @@ func (C *Center) run() {
 			//then the center will boardcast it
 			//back to all of the nodes.
 			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
-			C.boardcast(Msg{
-				source_node: nil,
-				content:     msg.content,
-			})
+			fmt.Println("Center.handleNodes", "---", msg.source_node)
+			fmt.Println("Center.handleNodes", "---", msg.description)
+			fmt.Println("Center.handleNodes", "---", msg.content)
+			msg.source_node = nil
+			C.boardcast(msg)
+			fmt.Println("Center.handleNodes", "888")
 		}
 	}
 }
@@ -238,7 +261,7 @@ func (C *Center) getOnliner() int {
 func main() {
 	fmt.Println("http://127.0.0.1:9999")
 	var center = newCenter()
-	go center.run()
+	go center.handleNodes()
 	//To provide the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	//To handle the websocket request:

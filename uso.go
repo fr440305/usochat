@@ -32,6 +32,14 @@ func newMsg(source_node *Node) *Msg {
 	return res
 }
 
+func (M *Msg) msgCopy() *Msg {
+	return &Msg{
+		source_node: M.source_node,
+		description: M.description,
+		content:     M.content[:],
+	}
+}
+
 func (M *Msg) setDescription(description string) *Msg {
 	M.description = html.EscapeString(description)
 	return M
@@ -223,6 +231,7 @@ func (C *Center) removeNode(rm_node *Node) error {
 
 //This method send message to all the nodes.
 func (C *Center) boardcast(boardcast_msg Msg) error {
+	//boardcast_msg.description = string(append([]byte(boardcast_msg.description), '-', '*'))
 	for _, N := range C.nodes {
 		N.msg_from_center <- boardcast_msg
 	}
@@ -232,24 +241,41 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 //listen and handle the msg.
 //use go statment to call this func.
 func (C *Center) handleNodes() {
+	var receive_msg Msg
+	var response_msg *Msg
+	var boardcast_msg *Msg
+	var rec_msg_desp string
 	for {
 		select {
-		case msg := <-C.msg_queue:
-			//if any of the node sends message,
-			//then the center will boardcast it
-			//back to all of the nodes.
-			fmt.Println("Center.handleNodes", "---", msg.source_node)
-			fmt.Println("Center.handleNodes", "---", msg.description)
-			fmt.Println("Center.handleNodes", "---", msg.content)
-			msg.source_node = nil
-			C.boardcast(msg)
+		case receive_msg = <-C.msg_queue:
+			//fmt.Println("Center.handleNodes", "---", msg.source_node)
+			//fmt.Println("Center.handleNodes", "---", msg.description)
+			//fmt.Println("Center.handleNodes", "---", msg.content)
+			//check:
+			rec_msg_desp = receive_msg.description
+			if rec_msg_desp == "user-login" {
+				response_msg = receive_msg.msgCopy()
+				response_msg.source_node = nil
+				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
+				response_msg.setContent([]string{"welcome"}) //should be chatting hist.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg.setContent([]string{"new member comes in!"}) //should be #online.
+			} else if rec_msg_desp == "user-logout" {
+				//no msg-0. only has msg-*.
+			} else if rec_msg_desp == "user-msg-text" {
+			} else {
+				//error
+			}
+			receive_msg.source_node.msg_from_center <- *response_msg
+			C.boardcast(*boardcast_msg)
 			fmt.Println("Center.handleNodes", "888")
 		}
 	}
 }
 
 //return the number of people online:
-func (C *Center) getOnliner(return_type string) int {
+func (C *Center) getOnliner() int {
 	return len(C.nodes)
 }
 

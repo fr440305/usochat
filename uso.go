@@ -6,7 +6,6 @@
 //CODE_COMPLETE:
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
-// - +++show the number of onliner.
 // - show the previous messages when initialize.
 
 package main
@@ -16,6 +15,7 @@ import "html"
 import "net/http"
 import "github.com/gorilla/websocket"
 import "encoding/json"
+import "strconv"
 
 type Msg struct {
 	source_node *Node // != nil => from node. ==nil => from center.
@@ -262,12 +262,12 @@ func (C *Center) handleNodes() {
 				response_msg.setContent([]string{"welcome"}) //should be chatting hist.
 				boardcast_msg = receive_msg.msgCopy()
 				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
-				boardcast_msg.setContent([]string{"new member comes in!"}) //should be #online.
+				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-logout" {
 				//no msg-0. only has msg-*.
 				boardcast_msg = receive_msg.msgCopy()
 				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
-				boardcast_msg.setContent([]string{"tara!"}) //should be #online.
+				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-msg-text" {
 				response_msg = receive_msg.msgCopy()
 				response_msg.source_node = nil

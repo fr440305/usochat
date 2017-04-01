@@ -5,7 +5,6 @@
 
 //CODE_COMPLETE:
 // - Msg.toJSON
-// - break Node.run into Node.listenToUser & Node.listenToCenter.
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
 // - +++show the number of onliner.
@@ -40,7 +39,6 @@ func (M *Msg) setDescription(description string) *Msg {
 	return M
 }
 
-//FIXME - it does not works.
 func (M *Msg) setContent(content []string) *Msg {
 	for i, str := range content {
 		content[i] = html.EscapeString(str)
@@ -87,63 +85,67 @@ type Node struct {
 	index           int64           // The index of this node in Center.nodes.
 }
 
+func (N *Node) handleUser(ifexit chan<- bool) {
+	//listener
+	//This goroutine receive msgs in the form of JSON from client.
+	var msg_cx []byte
+	var err error
+	var str_msg_cx string
+	var msg_to_center *Msg
+	for {
+		//the code will be blocked here:
+		//but don't worry, becase it's in the go statment.
+		_, msg_cx, err = N.conn.ReadMessage()
+		str_msg_cx = string(msg_cx[:])
+		if err != nil {
+			//the client was closed.
+			fmt.Println("-close-client-")
+			N.c_ptr.removeNode(N)
+			ifexit <- true
+			return
+		}
+		//check the content that client sent,
+		fmt.Println(
+			"received msg from client:\n\t",
+			str_msg_cx,
+			"\n\t",
+			html.EscapeString(str_msg_cx),
+		)
+		msg_to_center = newMsg(N)
+		fmt.Println(msg_to_center)
+		//TODO - check the error:
+		msg_to_center.parseJSON(str_msg_cx)
+		//and push it to center.
+		//TODO - change this msg:
+		N.c_ptr.msg_queue <- Msg{
+			source_node: N,
+			description: "user-msg",
+			content:     []string{str_msg_cx},
+		}
+	}
+}
+
+func (N *Node) handleCenter() {
+	//responser
+	//fetch the msg from center, and send it to client.
+	for {
+		select {
+		case msg := <-N.msg_from_center:
+			N.conn.WriteMessage(
+				websocket.TextMessage,
+				[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
+			)
+		}
+	}
+}
+
 //use go statment to call this func
 func (N *Node) run(ifexit chan<- bool) {
 	//var err error
 	var if_listener_exit = make(chan bool)
+	go N.handleUser(if_listener_exit)
+	go N.handleCenter()
 	fmt.Println("node::Run()")
-	go func() {
-		//listener
-		//This goroutine receive msgs in the form of JSON from client.
-		var msg_cx []byte
-		var err error
-		var str_msg_cx string
-		var msg_to_center *Msg
-		for {
-			//the code will be blocked here:
-			//but don't worry, becase it's in the go statment.
-			_, msg_cx, err = N.conn.ReadMessage()
-			str_msg_cx = string(msg_cx[:])
-			if err != nil {
-				//the client was closed.
-				fmt.Println("-close-client-")
-				N.c_ptr.removeNode(N)
-				if_listener_exit <- true
-				return
-			}
-			//check the content that client sent,
-			fmt.Println(
-				"received msg from client:\n\t",
-				str_msg_cx,
-				"\n\t",
-				html.EscapeString(str_msg_cx),
-			)
-			msg_to_center = newMsg(N)
-			fmt.Println(msg_to_center)
-			//TODO - check the error:
-			msg_to_center.parseJSON(str_msg_cx)
-			//and push it to center.
-			//TODO - change this msg:
-			N.c_ptr.msg_queue <- Msg{
-				source_node: N,
-				description: "user-msg",
-				content:     []string{str_msg_cx},
-			}
-		}
-	}()
-	go func() {
-		//responser
-		//fetch the msg from center, and send it to client.
-		for {
-			select {
-			case msg := <-N.msg_from_center:
-				N.conn.WriteMessage(
-					websocket.TextMessage,
-					[]byte(msg.content[0]), //FIXME#1 - msg.toJSON()
-				)
-			}
-		}
-	}()
 	select {
 	case <-if_listener_exit:
 		//if the listener exit, then the whole node will exit.
@@ -215,7 +217,7 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 
 //listen and handle the msg.
 //use go statment to call this func.
-func (C *Center) run() {
+func (C *Center) handleNodes() {
 	for {
 		select {
 		case msg := <-C.msg_queue:
@@ -240,7 +242,7 @@ func (C *Center) getOnliner() int {
 func main() {
 	fmt.Println("http://127.0.0.1:9999")
 	var center = newCenter()
-	go center.run()
+	go center.handleNodes()
 	//To provide the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	//To handle the websocket request:

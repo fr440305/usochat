@@ -121,6 +121,9 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 		str_msg_cx = string(msg_cx[:])
 		if err != nil {
 			//the client was closed.
+			msg_to_center = newMsg(N)
+			msg_to_center.setDescription("user-logout")
+			N.c_ptr.msg_queue <- *msg_to_center
 			fmt.Println("-close-client-")
 			N.c_ptr.removeNode(N)
 			ifexit <- true
@@ -255,7 +258,6 @@ func (C *Center) handleNodes() {
 			rec_msg_desp = receive_msg.description
 			if rec_msg_desp == "user-login" {
 				response_msg = receive_msg.msgCopy()
-				response_msg.source_node = nil
 				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
 				response_msg.setContent([]string{"welcome"}) //should be chatting hist.
 				boardcast_msg = receive_msg.msgCopy()
@@ -263,12 +265,26 @@ func (C *Center) handleNodes() {
 				boardcast_msg.setContent([]string{"new member comes in!"}) //should be #online.
 			} else if rec_msg_desp == "user-logout" {
 				//no msg-0. only has msg-*.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg.setContent([]string{"tara!"}) //should be #online.
 			} else if rec_msg_desp == "user-msg-text" {
+				response_msg = receive_msg.msgCopy()
+				response_msg.source_node = nil
+				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
+				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
 			} else {
 				//error
 			}
-			receive_msg.source_node.msg_from_center <- *response_msg
-			C.boardcast(*boardcast_msg)
+			//send them back:
+			if response_msg != nil {
+				receive_msg.source_node.msg_from_center <- *response_msg
+			}
+			if boardcast_msg != nil {
+				C.boardcast(*boardcast_msg)
+			}
 			fmt.Println("Center.handleNodes", "888")
 		}
 	}

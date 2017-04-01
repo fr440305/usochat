@@ -6,7 +6,6 @@
 //CODE_COMPLETE:
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
-// - +++show the number of onliner.
 // - show the previous messages when initialize.
 
 package main
@@ -16,11 +15,10 @@ import "html"
 import "net/http"
 import "github.com/gorilla/websocket"
 import "encoding/json"
+import "strconv"
 
 type Msg struct {
-	//If source_node != nil then it is a message from node to center.
-	//else it is from center to node.
-	source_node *Node
+	source_node *Node // != nil => from node. ==nil => from center.
 	description string
 	content     []string
 }
@@ -32,6 +30,14 @@ func newMsg(source_node *Node) *Msg {
 	res.content = []string{}
 	fmt.Println("newMsg", res)
 	return res
+}
+
+func (M *Msg) msgCopy() *Msg {
+	return &Msg{
+		source_node: M.source_node,
+		description: M.description,
+		content:     M.content[:],
+	}
 }
 
 func (M *Msg) setDescription(description string) *Msg {
@@ -50,7 +56,6 @@ func (M *Msg) setContent(content []string) *Msg {
 }
 
 //Pay attention to the probobaly-appear errors.
-//use re2.
 func (M *Msg) parseJSON(json_raw string) error {
 	var user_msg struct {
 		SouceNode   string   `json:"source_node"`
@@ -116,6 +121,9 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 		str_msg_cx = string(msg_cx[:])
 		if err != nil {
 			//the client was closed.
+			msg_to_center = newMsg(N)
+			msg_to_center.setDescription("user-logout")
+			N.c_ptr.msg_queue <- *msg_to_center
 			fmt.Println("-close-client-")
 			N.c_ptr.removeNode(N)
 			ifexit <- true
@@ -150,7 +158,7 @@ func (N *Node) listenToCenter() {
 			fmt.Println("Node.handleCenter", json_to_user)
 			N.conn.WriteMessage(
 				websocket.TextMessage,
-				[]byte(json_to_user), //FIXME#1 - msg.toJSON()
+				[]byte(json_to_user),
 			)
 		}
 	}
@@ -226,6 +234,7 @@ func (C *Center) removeNode(rm_node *Node) error {
 
 //This method send message to all the nodes.
 func (C *Center) boardcast(boardcast_msg Msg) error {
+	//boardcast_msg.description = string(append([]byte(boardcast_msg.description), '-', '*'))
 	for _, N := range C.nodes {
 		N.msg_from_center <- boardcast_msg
 	}
@@ -235,18 +244,47 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 //listen and handle the msg.
 //use go statment to call this func.
 func (C *Center) handleNodes() {
+	var receive_msg Msg
+	var response_msg *Msg
+	var boardcast_msg *Msg
+	var rec_msg_desp string
 	for {
 		select {
-		case msg := <-C.msg_queue:
-			//if any of the node sends message,
-			//then the center will boardcast it
-			//back to all of the nodes.
-			//TODO - if this is a text/picture message, then save it into Center.user_msgs.
-			fmt.Println("Center.handleNodes", "---", msg.source_node)
-			fmt.Println("Center.handleNodes", "---", msg.description)
-			fmt.Println("Center.handleNodes", "---", msg.content)
-			msg.source_node = nil
-			C.boardcast(msg)
+		case receive_msg = <-C.msg_queue:
+			//fmt.Println("Center.handleNodes", "---", msg.source_node)
+			//fmt.Println("Center.handleNodes", "---", msg.description)
+			//fmt.Println("Center.handleNodes", "---", msg.content)
+			//check:
+			rec_msg_desp = receive_msg.description
+			if rec_msg_desp == "user-login" {
+				response_msg = receive_msg.msgCopy()
+				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
+				response_msg.setContent([]string{"welcome"}) //should be chatting hist.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
+			} else if rec_msg_desp == "user-logout" {
+				//no msg-0. only has msg-*.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
+			} else if rec_msg_desp == "user-msg-text" {
+				response_msg = receive_msg.msgCopy()
+				response_msg.source_node = nil
+				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
+				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
+				boardcast_msg = receive_msg.msgCopy()
+				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+			} else {
+				//error
+			}
+			//send them back:
+			if response_msg != nil {
+				receive_msg.source_node.msg_from_center <- *response_msg
+			}
+			if boardcast_msg != nil {
+				C.boardcast(*boardcast_msg)
+			}
 			fmt.Println("Center.handleNodes", "888")
 		}
 	}
@@ -254,7 +292,6 @@ func (C *Center) handleNodes() {
 
 //return the number of people online:
 func (C *Center) getOnliner() int {
-	fmt.Println("center::GetOnliner()", C.nodes)
 	return len(C.nodes)
 }
 

@@ -66,11 +66,14 @@ if (window.WebSocket != undefined) {
 	};
 	ws_conn.onmessage = function(e) {
 		//e.data will be jsonlified later on.
+		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>"); //test mode.
+		/*
 		var msg_content = JSON.parse(e.data);
 		msg_content = msg_content["content"]; // now, msg_content is a string array.
 		for (var i = 0; i < msg_content.length; i++) {
 			_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
 		}
+		*/
 
 	};
 	ws_conn.onerror = function (e) {

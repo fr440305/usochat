@@ -6,7 +6,6 @@
 //CODE_COMPLETE:
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
-// - show the previous messages when initialize.
 
 package main
 
@@ -182,7 +181,7 @@ func (N *Node) run(ifexit chan<- bool) {
 
 type Center struct {
 	msg_queue chan Msg
-	user_msgs []*Msg // chatting history
+	dialogs   []*Msg // chatting history
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
 }
@@ -191,7 +190,7 @@ func newCenter() *Center {
 	fmt.Println("newCenter()")
 	return &Center{
 		msg_queue: make(chan Msg),
-		user_msgs: *new([]*Msg),
+		dialogs:   *new([]*Msg),
 		nodes:     *new([]*Node),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -248,6 +247,7 @@ func (C *Center) handleNodes() {
 	var response_msg *Msg
 	var boardcast_msg *Msg
 	var rec_msg_desp string
+	var chat_hist []string
 	for {
 		select {
 		case receive_msg = <-C.msg_queue:
@@ -257,9 +257,13 @@ func (C *Center) handleNodes() {
 			//check:
 			rec_msg_desp = receive_msg.description
 			if rec_msg_desp == "user-login" {
+				for _, prev_msg := range C.dialogs {
+					fmt.Println("Center.handleNodes", chat_hist)
+					chat_hist = append(chat_hist, prev_msg.content[:]...)
+				}
 				response_msg = receive_msg.msgCopy()
 				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
-				response_msg.setContent([]string{"welcome"}) //should be chatting hist.
+				response_msg.setContent(chat_hist) //should be chatting hist.
 				boardcast_msg = receive_msg.msgCopy()
 				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
@@ -269,6 +273,8 @@ func (C *Center) handleNodes() {
 				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-msg-text" {
+				//save the message into Center.dialogs
+				C.dialogs = append(C.dialogs, receive_msg.msgCopy())
 				response_msg = receive_msg.msgCopy()
 				response_msg.source_node = nil
 				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
@@ -285,6 +291,7 @@ func (C *Center) handleNodes() {
 			if boardcast_msg != nil {
 				C.boardcast(*boardcast_msg)
 			}
+			fmt.Println("Center.handleNodes - dialogs:", C.dialogs)
 			fmt.Println("Center.handleNodes", "888")
 		}
 	}

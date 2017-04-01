@@ -18,9 +18,7 @@ import "github.com/gorilla/websocket"
 import "encoding/json"
 
 type Msg struct {
-	//If source_node != nil then it is a message from node to center.
-	//else it is from center to node.
-	source_node *Node
+	source_node *Node // != nil => from node. ==nil => from center.
 	description string
 	content     []string
 }
@@ -50,7 +48,6 @@ func (M *Msg) setContent(content []string) *Msg {
 }
 
 //Pay attention to the probobaly-appear errors.
-//use re2.
 func (M *Msg) parseJSON(json_raw string) error {
 	var user_msg struct {
 		SouceNode   string   `json:"source_node"`

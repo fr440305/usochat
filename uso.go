@@ -4,7 +4,6 @@
 // 要牢记：软件是长出来的。
 
 //CODE_COMPLETE:
-// - Msg.toJSON
 // --all TODOs & FIXMEs
 // - documentation: on business logic.
 // - +++show the number of onliner.
@@ -134,7 +133,6 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 		msg_to_center.parseJSON(str_msg_cx)
 		fmt.Println("Node.handleUser", "msgtocenter", msg_to_center.description)
 		//and push it to center.
-		//TODO - change this msg:
 		fmt.Println("Node.handleUser", *msg_to_center)
 		N.c_ptr.msg_queue <- *msg_to_center
 	}
@@ -176,7 +174,7 @@ func (N *Node) run(ifexit chan<- bool) {
 
 type Center struct {
 	msg_queue chan Msg
-	user_msgs []*Msg
+	user_msgs []*Msg // chatting history
 	nodes     []*Node
 	upgrader  websocket.Upgrader //Constant
 }
@@ -196,8 +194,8 @@ func newCenter() *Center {
 
 func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
-	fmt.Println("center::newNode()")
 	var res = new(Node)
+	fmt.Println("center::newNode()")
 	res.msg_from_center = make(chan Msg) //string
 	res.c_ptr = C
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)

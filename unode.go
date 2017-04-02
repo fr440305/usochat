@@ -18,7 +18,7 @@ type Node struct {
 
 //listener
 //This goroutine receive msgs in the form of JSON from client.
-func (N *Node) listenToUser(ifexit chan<- bool) {
+func (N *Node) handleUser(ifexit chan<- bool) {
 	var err error
 	var msg_cx []byte      // the byte array from user.
 	var str_msg_cx string  // the conversion for byte array.
@@ -30,7 +30,7 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 		str_msg_cx = string(msg_cx[:])
 		if err != nil {
 			//the client was closed.
-			fmt.Println("\n\n\nNode.listenToUser", "A user has been leaving!")
+			fmt.Println("\n\n\nNode.handleUser", "A user has been leaving!")
 			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("user-logout")
 			N.c_ptr.msg_queue <- *msg_to_center
@@ -38,25 +38,25 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 			//make center to do this.
 			N.c_ptr.removeNode(N)
 			ifexit <- true
-			fmt.Println("Node.listenToUser", "exits")
+			fmt.Println("Node.handleUser", "exits")
 			return
 		}
 		//check the content that client sent,
-		fmt.Println("\nNode.listenToUser", "received JSON:", str_msg_cx)
+		fmt.Println("\nNode.handleUser", "received JSON:", str_msg_cx)
 		msg_to_center = newMsg(N)
 		//TODO - check the error:
 		msg_to_center.parseJSON(str_msg_cx)
 		//and push it to center.
-		fmt.Println("Node.listenToUser", "send this msg to center:", msg_to_center.toJSON())
+		fmt.Println("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())
 		N.c_ptr.msg_queue <- *msg_to_center
 	}
 }
 
 //responser
 //fetch the msg from center, and send it to client.
-func (N *Node) listenToCenter() {
-	var msg Msg             // The message that received from center.
-	var json_to_user string // The JSON string that meeds to be sent to user.
+func (N *Node) handleCenter() {
+	var msg Msg             // The message received from center.
+	var json_to_user string // The JSON string that needs to be sent to user.
 	for {
 		select {
 		case msg = <-N.msg_from_center:
@@ -78,12 +78,11 @@ func (N *Node) listenToCenter() {
 func (N *Node) run(ifexit chan<- bool) {
 	//var err error
 	var if_listener_exit = make(chan bool)
-	go N.listenToUser(if_listener_exit)
-	go N.listenToCenter()
+	go N.handleUser(if_listener_exit)
+	go N.handleCenter()
 	fmt.Println("Node.run")
 	select {
 	case <-if_listener_exit:
-		//if the listener exit, then the whole node will exit.
 		ifexit <- true
 		fmt.Println("Node.run", "exits")
 		return

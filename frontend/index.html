@@ -18,6 +18,9 @@
 	<body>
 		<input type='button' value='LIGHT' id='_LIGHT_'>
 		<input type='button' value='DARK' id='_DARK_'>
+		<div id='_ONLINER_BOARD_'>
+			<span>在线人数：</span><span id='_ONLINER_'></span>
+		</div>
 		<div id="_TEST_"></div>
 		<div id='_APP_'>
 			<div> <b> WebSocket </b> </div>
@@ -66,14 +69,36 @@ if (window.WebSocket != undefined) {
 	};
 	ws_conn.onmessage = function(e) {
 		//e.data will be jsonlified later on.
-		_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>"); //test mode.
-		/*
+		//_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>"); //test mode.
 		var msg_content = JSON.parse(e.data);
-		msg_content = msg_content["content"]; // now, msg_content is a string array.
-		for (var i = 0; i < msg_content.length; i++) {
-			_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
+		var msg_desp = "";
+		if (msg_content["description"] !== undefined) {
+			msg_desp = msg_content["description"];
+		} else {
+			//error: no description.
 		}
-		*/
+		if (msg_desp === "user-login-0") {
+			msg_content = msg_content["content"]; // now, msg_content is a string array.
+			for (var i = 0; i < msg_content.length; i++) {
+				_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
+			}
+		} else if (msg_desp === "user-login-*") {
+			msg_content = msg_content["content"][0]; // now, msg_content is a string array.
+			_ONLINER_.innerHTML = msg_content;
+		} else if (msg_desp === "user-msg-text-0") {
+			// ... //
+		} else if (msg_desp === "user-msg-text-*") {
+			msg_content = msg_content["content"]; // now, msg_content is a string array.
+			for (var i = 0; i < msg_content.length; i++) {
+				_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
+			}
+		} else if (msg_desp === "user-logout-*") {
+			msg_content = msg_content["content"][0]; // now, msg_content is a string array.
+			_ONLINER_.innerHTML = msg_content;
+		} else {
+			//error: invalid msg.
+		}
+
 
 	};
 	ws_conn.onerror = function (e) {

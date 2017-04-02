@@ -39,7 +39,7 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
 	var res = new(Node)
 	fmt.Println("center::newNode()")
-	res.msg_from_center = make(chan Msg) //string
+	res.msg_from_center = make(chan Msg)
 	res.c_ptr = C
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -48,6 +48,7 @@ func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 			"when creating the websocket.conn",
 		)
 	}
+	//TODO - add a node iden allocation.
 	C.nodes = append(C.nodes, res)
 	fmt.Println("online: ", C.getOnliner())
 	return res
@@ -104,6 +105,7 @@ func (C *Center) handleNodes() {
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-logout" {
 				//no msg-0. only has msg-*.
+				//TODO - remove this node.
 				boardcast_msg = receive_msg.msgCopy('*')
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-msg-text" {
@@ -118,7 +120,6 @@ func (C *Center) handleNodes() {
 			}
 			//send them back:
 			if response_msg != nil {
-				//FIXME what if this source node does not exist anymore?
 				receive_msg.source_node.msg_from_center <- *response_msg
 			}
 			if boardcast_msg != nil {

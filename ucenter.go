@@ -118,6 +118,7 @@ func (C *Center) handleNodes() {
 			}
 			//send them back:
 			if response_msg != nil {
+				//FIXME what if this source node does not exist anymore?
 				receive_msg.source_node.msg_from_center <- *response_msg
 			}
 			if boardcast_msg != nil {

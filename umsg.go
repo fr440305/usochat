@@ -9,12 +9,12 @@
 
 package main
 
-import "fmt"
+//import "fmt"
 import "html"
 import "encoding/json"
 
 type Msg struct {
-	source_node *Node // != nil => from node. ==nil => from center.
+	source_node *Node
 	description string
 	content     []string
 }
@@ -24,7 +24,7 @@ func newMsg(source_node *Node) *Msg {
 	res.source_node = source_node
 	res.description = ""
 	res.content = []string{}
-	fmt.Println("newMsg", res)
+	//fmt.Println("newMsg", res)
 	return res
 }
 
@@ -53,10 +53,8 @@ func (M *Msg) setDescription(description string) *Msg {
 func (M *Msg) setContent(content []string) *Msg {
 	for i, str := range content {
 		content[i] = html.EscapeString(str)
-		fmt.Println("Msg.setContent", content[i])
 	}
 	M.content = content
-	fmt.Println("Msg.setContent", content)
 	return M
 }
 
@@ -70,8 +68,6 @@ func (M *Msg) parseJSON(json_raw string) error {
 	json.Unmarshal([]byte(json_raw), &user_msg)
 	M.setDescription(user_msg.Description)
 	M.setContent(user_msg.Content)
-	fmt.Println("Msg.parseJSON", user_msg)
-	fmt.Println("Msg.parseJSOn - end.")
 	return nil
 }
 
@@ -80,19 +76,21 @@ func (M *Msg) parseJSON(json_raw string) error {
 func (M *Msg) toJSON() string {
 	var res []byte
 	var err error
-	fmt.Println("Msg.toJSON", "begin")
+	var source_node_iden string
+	if M.source_node == nil {
+		source_node_iden = ""
+	} else {
+		source_node_iden = M.source_node.iden
+	}
 	var user_msg = struct {
 		SouceNode   string   `json:"source_node"`
 		Description string   `json:"description"`
 		Content     []string `json:"content"`
-	}{M.source_node.iden, M.description, M.content}
-	fmt.Println("Msg.toJSON", user_msg)
+	}{source_node_iden, M.description, M.content}
 	res, err = json.Marshal(user_msg)
 	if err != nil {
 		//TODO - error handler goes here...
 	}
-	fmt.Println("Msg.toJSON", user_msg)
-	fmt.Println("Msg.toJSOn - end.", string(res))
 	return string(res)
 	//return `{"content":["toJSON","toJSON"]}`
 }

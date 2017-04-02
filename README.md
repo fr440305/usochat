@@ -101,4 +101,7 @@ const ALL_UPPERCASE = 8
 FireRain :=: 火雨
 email: fr440305@gmail.com
 
+## Bugs
 
+- Sometimes, it will crash.
+Maybe is has infinite loop somewhere. (apr, 1, 2017)

@@ -9,7 +9,6 @@
 
 package main
 
-import "fmt"
 import "net/http"
 import "github.com/gorilla/websocket"
 import "strconv"
@@ -22,7 +21,7 @@ type Center struct {
 }
 
 func newCenter() *Center {
-	fmt.Println("_newCenter")
+	_ulog("_newCenter")
 	return &Center{
 		msg_queue: make(chan Msg),
 		dialogs:   []*Msg{},
@@ -38,12 +37,12 @@ func newCenter() *Center {
 func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
 	var err error
 	var res = new(Node)
-	fmt.Println("\n\n\nCenter.newNode", "A new node goes in!")
+	_ulog("\n\n\nCenter.newNode", "A new node goes in!")
 	res.msg_from_center = make(chan Msg)
 	res.c_ptr = C
 	res.conn, err = C.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("fatal - Center.newNode", "cannot create websocket.conn")
+		_ulog("fatal - Center.newNode", "cannot create websocket.conn")
 	}
 	//TODO - add a node iden allocation.
 	C.nodes = append(C.nodes, res)
@@ -89,14 +88,14 @@ func (C *Center) handleNodes() {
 		chat_hist = []string{}
 		select {
 		case receive_msg = <-C.msg_queue:
-			//fmt.Println("Center.handleNodes", "---", msg.source_node)
-			//fmt.Println("Center.handleNodes", "---", msg.description)
-			fmt.Println("Center.handleNodes", "receive this Msg from node:", receive_msg.toJSON())
+			//_ulog("Center.handleNodes", "---", msg.source_node)
+			//_ulog("Center.handleNodes", "---", msg.description)
+			_ulog("Center.handleNodes", "receive this Msg from node:", receive_msg.toJSON())
 			//check:
 			rec_msg_desp = receive_msg.description
 			if rec_msg_desp == "user-login" {
 				for _, prev_msg := range C.dialogs {
-					fmt.Println("Center.handleNodes", chat_hist)
+					_ulog("Center.handleNodes", chat_hist)
 					chat_hist = append(chat_hist, prev_msg.content[:]...)
 				}
 				response_msg = receive_msg.msgCopy('0')
@@ -111,11 +110,11 @@ func (C *Center) handleNodes() {
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-msg-text" {
 				//save the message into Center.dialogs
-				fmt.Println("Center.handleNodes", "saves this msg to chattinghist slice.")
+				_ulog("Center.handleNodes", "saves this msg to chattinghist slice.")
 				C.dialogs = append(C.dialogs, receive_msg.msgCopy(' '))
 				response_msg = receive_msg.msgCopy('0')
 				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
-				fmt.Println("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
+				_ulog("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
 				boardcast_msg = receive_msg.msgCopy('*')
 			} else {
 				//error
@@ -123,13 +122,13 @@ func (C *Center) handleNodes() {
 			//send them back:
 			// always true:
 			if response_msg != nil {
-				fmt.Println("Center.handleNodes", "__DEBUG_RECEIVEMSG__", receive_msg.source_node)
+				_ulog("Center.handleNodes", "__DEBUG_RECEIVEMSG__", receive_msg.source_node)
 				receive_msg.source_node.msg_from_center <- *response_msg
-				fmt.Println("Center.handleNodes", "has responsed this Msg to the node:", response_msg.toJSON())
+				_ulog("Center.handleNodes", "has responsed this Msg to the node:", response_msg.toJSON())
 			}
 			if boardcast_msg != nil {
 				C.boardcast(*boardcast_msg)
-				fmt.Println("Center.handleNodes", "has boardcasten this Msg to all the nodes:", boardcast_msg.toJSON())
+				_ulog("Center.handleNodes", "has boardcasten this Msg to all the nodes:", boardcast_msg.toJSON())
 			}
 		}
 	}

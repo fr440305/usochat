@@ -5,7 +5,6 @@
 
 package main
 
-import "fmt"
 import "github.com/gorilla/websocket"
 
 //type Node maps to a client.
@@ -30,7 +29,7 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 		str_msg_cx = string(msg_cx[:])
 		if err != nil {
 			//the client was closed.
-			fmt.Println("\n\n\nNode.handleUser", "A user has been leaving!")
+			_ulog("\n\n\nNode.handleUser", "A user has been leaving!")
 			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("user-logout")
 			N.c_ptr.msg_queue <- *msg_to_center
@@ -38,16 +37,16 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 			//make center to do this.
 			N.c_ptr.removeNode(N)
 			ifexit <- true
-			fmt.Println("Node.handleUser", "exits")
+			_ulog("Node.handleUser", "exits")
 			return
 		}
 		//check the content that client sent,
-		fmt.Println("\nNode.handleUser", "received JSON:", str_msg_cx)
+		_ulog("\nNode.handleUser", "received JSON:", str_msg_cx)
 		msg_to_center = newMsg(N)
 		//TODO - check the error:
 		msg_to_center.parseJSON(str_msg_cx)
 		//and push it to center.
-		fmt.Println("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())
+		_ulog("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())
 		N.c_ptr.msg_queue <- *msg_to_center
 	}
 }
@@ -60,14 +59,14 @@ func (N *Node) handleCenter() {
 	for {
 		select {
 		case msg = <-N.msg_from_center:
-			fmt.Println("Node.handleCenter", "receives this Msg from center:", msg.toJSON())
+			_ulog("Node.handleCenter", "receives this Msg from center:", msg.toJSON())
 			if msg.description == "user-logout-0" {
-				fmt.Println("Node.handleCenter", "exits.")
+				_ulog("Node.handleCenter", "exits.")
 				return
 			} else {
 				msg.source_node = N
 				json_to_user = msg.toJSON()
-				fmt.Println("Node.handleCenter", "Send this json to user:", json_to_user)
+				_ulog("Node.handleCenter", "Send this json to user:", json_to_user)
 				N.conn.WriteMessage(websocket.TextMessage, []byte(json_to_user))
 			}
 		}
@@ -80,11 +79,11 @@ func (N *Node) run(ifexit chan<- bool) {
 	var if_listener_exit = make(chan bool)
 	go N.handleUser(if_listener_exit)
 	go N.handleCenter()
-	fmt.Println("Node.run")
+	_ulog("Node.run")
 	select {
 	case <-if_listener_exit:
 		ifexit <- true
-		fmt.Println("Node.run", "exits")
+		_ulog("Node.run", "exits")
 		return
 	}
 }

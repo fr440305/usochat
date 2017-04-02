@@ -98,26 +98,21 @@ func (C *Center) handleNodes() {
 					fmt.Println("Center.handleNodes", chat_hist)
 					chat_hist = append(chat_hist, prev_msg.content[:]...)
 				}
-				response_msg = receive_msg.msgCopy()
-				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
+				response_msg = receive_msg.msgCopy('0')
 				response_msg.setContent(chat_hist) //should be chatting hist.
-				boardcast_msg = receive_msg.msgCopy()
-				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg = receive_msg.msgCopy('*')
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-logout" {
 				//no msg-0. only has msg-*.
-				boardcast_msg = receive_msg.msgCopy()
-				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg = receive_msg.msgCopy('*')
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
 			} else if rec_msg_desp == "user-msg-text" {
 				//save the message into Center.dialogs
-				C.dialogs = append(C.dialogs, receive_msg.msgCopy())
-				response_msg = receive_msg.msgCopy()
+				C.dialogs = append(C.dialogs, receive_msg.msgCopy(' '))
+				response_msg = receive_msg.msgCopy('0')
 				response_msg.source_node = nil
-				response_msg.setDescription(string(append([]byte(receive_msg.description), '-', '0')))
 				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
-				boardcast_msg = receive_msg.msgCopy()
-				boardcast_msg.setDescription(string(append([]byte(receive_msg.description), '-', '*')))
+				boardcast_msg = receive_msg.msgCopy('*')
 			} else {
 				//error
 			}

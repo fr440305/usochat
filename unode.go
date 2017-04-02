@@ -34,9 +34,9 @@ func (N *Node) listenToUser(ifexit chan<- bool) {
 			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("user-logout")
 			N.c_ptr.msg_queue <- *msg_to_center
-			fmt.Println("-close-client-")
 			N.c_ptr.removeNode(N)
 			ifexit <- true
+			fmt.Println("-close-client-")
 			return
 		}
 		//check the content that client sent,

@@ -28,10 +28,19 @@ func newMsg(source_node *Node) *Msg {
 	return res
 }
 
-func (M *Msg) msgCopy() *Msg {
+//new_msg_type = '0' | '*' | ' '
+//'0' for response message, '*' for boardcast message.
+// ' ' for original message.
+func (M *Msg) msgCopy(new_msg_type byte) *Msg {
+	var new_description string
+	if new_msg_type == ' ' {
+		new_description = M.description
+	} else {
+		new_description = string(append([]byte(M.description), '-', new_msg_type))
+	}
 	return &Msg{
 		source_node: M.source_node,
-		description: M.description,
+		description: new_description,
 		content:     M.content[:],
 	}
 }

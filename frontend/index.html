@@ -3,16 +3,20 @@
 <html>
 	<head>
 		<meta charset='utf-8'>
-		<meta name='viewport' content='width=300px;initial-scale=1.0'>
+		<meta name='viewport' content='width=300px;initial-scale=1'>
 		<style>
 
 #_APP_ {
 	z-index: 0;
 }
+
 #_SEND_CONTENT_ {
 	font-size: 16px;
-	width: 95%;
+	margin-right: 5%;
+	margin-left: 5%;
+	width: 90%;
 }
+
 
 #_CANV_MASK_ {
 	opacity: 0.5;
@@ -26,6 +30,19 @@
 	z-index: 1;
 }
 
+
+#_SEND_OPTION_BOARD_ {
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 10%;
+	display: none;
+	position: absolute;
+	text-align: right;
+	z-index: 2;
+}
+
+
 #_CANV_PAINT_ {
 	opacity: 0.5;
 	display: none;
@@ -35,13 +52,17 @@
 	background-color: gray;
 	width: 100%;
 	height: 90%;
-	z-index: 2;
+	z-index: 3;
 }
 
 
 		</style>
 	</head>
 	<body>
+		<div id="_SEND_OPTION_BOARD_">
+			<input type='button' value='CANCEL' id='_SEND_CANCEL_'>
+			<input type='button' value='SEND' id='_SEND_PAINT_CONFIRM_'>
+		</div>
 		<canvas id="_CANV_MASK_" width="100px" height="100px"></canvas>
 		<canvas id="_CANV_PAINT_" width="100px" height="100px"></canvas>
 		<div id='_APP_'>
@@ -56,10 +77,10 @@
 			</div>
 			<div id='_SEND_BOARD_'>
 				<hr />
-				<p style="text-align:right;"><input
-					type='button'
-					value='SEND'
-					id='_SEND_CONFIRM_'></p>
+				<p style="text-align:right;">
+					<input type='button' value='DOODLE' id='_SEND_OPTION_'>
+					<input type='button' value='SEND' id='_SEND_CONFIRM_'>
+				</p>
 				<p><input
 					type='text'
 					id='_SEND_CONTENT_'></p>
@@ -68,6 +89,12 @@
 		</div>
 		<script type='text/javascript'>
 
+_CANV_MASK_.ontouchmove = function(e) {
+	e.preventDefault();
+}
+_CANV_PAINT_.ontouchmove = function(e) {
+	e.preventDefault();
+}
 _DARK_.onclick = function () {
 	document.body.style.backgroundColor = "#000";
 	document.body.style.color = "#fff";
@@ -76,6 +103,16 @@ _LIGHT_.onclick = function () {
 	document.body.style.backgroundColor = "#fff";
 	document.body.style.color = "#000";
 };
+_SEND_OPTION_.onclick = function () {
+	_SEND_OPTION_BOARD_.style.display = "block";
+	_CANV_MASK_.style.display = "block";
+	_CANV_PAINT_.style.display = "block";
+};
+_SEND_CANCEL_.onclick = function () {
+	_CANV_MASK_.style.display = "none";
+	_CANV_PAINT_.style.display = "none";
+	_SEND_OPTION_BOARD_.style.display = "none";
+}
 if (window.WebSocket != undefined) {
 	//change the abs-url to document.host:
 	var ws_conn = new WebSocket("ws://" + document.location.host + "/ws");
@@ -143,6 +180,9 @@ if (window.WebSocket != undefined) {
 			_SEND_CONFIRM_.onclick();
 			_SEND_CONTENT_.click();
 		}
+	};
+	_SEND_PAINT_CONFIRM_.onclick = function () {
+		// TODO //
 	};
 	_SEND_CONFIRM_.onclick = function () {
 		var json_msg = {

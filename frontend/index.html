@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta charset='utf-8'>
-		<meta name='viewport' content='width=300px;initial-scale=1'>
+		<meta name='viewport' content='width=300px,initial-scale=1'>
 		<style>
 
 #_APP_ {
@@ -69,7 +69,9 @@
 			<input type='button' value='LIGHT' id='_LIGHT_'>
 			<input type='button' value='DARK' id='_DARK_'>
 			<div id='_ONLINER_BOARD_'> <span>在线人数：</span><span id='_ONLINER_'></span> </div>
-			<div id="_TEST_"></div>
+			<div id="_TEST_">
+				<img id="_IMG_TEST_"></img>
+			</div>
 			<div> <b> WebSocket </b> </div>
 			<div id='_ONLINE_'>
 				<span>received data:&nbsp;</span>
@@ -88,12 +90,33 @@
 		</div>
 		<script type='text/javascript'>
 
+_CANV_PAINT_.width = window.innerWidth;
+_CANV_PAINT_.height = window.innerHeight * 0.9;
 _CANV_MASK_.ontouchmove = function(e) {
 	e.preventDefault();
 }
-_CANV_PAINT_.ontouchmove = function(e) {
+_CANV_PAINT_.onmousedown = function () {
+	_CANV_PAINT_.onmousemove = function (e) {
+		//FIXME - screenX does not works very well.
+		var _x = e.screenX;
+		var _y = e.screenY;
+		console.log(_x, ", ", _y);
+		e.preventDefault();
+		_CANV_PAINT_.getContext("2d").fillStyle = "green";
+		_CANV_PAINT_.getContext("2d").fillRect(_x, _y, 5, 5);
+	};
+};
+_CANV_PAINT_.onmouseup = function () {
+	_CANV_PAINT_.onmousemove = undefined;
+};
+_CANV_PAINT_.addEventListener("touchmove", function(e) {
+	var _x = e.changedTouches[0].pageX;
+	var _y = e.changedTouches[0].pageY;
+	console.log(_x, ", ", _y);
 	e.preventDefault();
-}
+	_CANV_PAINT_.getContext("2d").fillStyle = "green";
+	_CANV_PAINT_.getContext("2d").fillRect(_x, _y, 5, 5);
+});
 _DARK_.onclick = function () {
 	document.body.style.backgroundColor = "#000";
 	document.body.style.color = "#fff";
@@ -108,6 +131,9 @@ _SEND_OPTION_.onclick = function () {
 	_CANV_PAINT_.style.display = "block";
 };
 _SEND_CANCEL_.onclick = function () {
+	var w = _CANV_PAINT_.width;
+	var h = _CANV_PAINT_.height;
+	_CANV_PAINT_.getContext("2d").clearRect(0, 0, w, h);
 	_CANV_MASK_.style.display = "none";
 	_CANV_PAINT_.style.display = "none";
 	_SEND_OPTION_BOARD_.style.display = "none";
@@ -181,7 +207,8 @@ if (window.WebSocket != undefined) {
 		}
 	};
 	_SEND_PAINT_CONFIRM_.onclick = function () {
-		// TODO //
+		console.log(_CANV_PAINT_.toDataURL());
+		_IMG_TEST_.src = _CANV_PAINT_.toDataURL();
 	};
 	_SEND_CONFIRM_.onclick = function () {
 		var json_msg = {

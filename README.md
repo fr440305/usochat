@@ -1,10 +1,17 @@
 # USO - Rewrite - prelease.
 
 Uso is a simple online chatting platfrom.
-You can go to (here)[http://45.118.135.218:9999/]
+
+## USE IT RIGHT NOW
+
+You can go to [here](http://45.118.135.218:9999/)
 to try, but it does not work all the time.
 
-## Prog Construction
+## Install the server to your computer
+
+...
+
+## Project Structure
 
 I will describe the structure of this platform
 in three perspectives: feature, modules,
@@ -37,17 +44,21 @@ by using WebSocket.
 
 ### Modules
 
+...
+
 ### Status
+
+...
 
 ### Dependencies
 
 The dependent package(s) is/are:
 
--	github.com/gorilla/websocket
---	An implementation of WebSocket in Golang.
+- github.com/gorilla/websocket
+	* An implementation of WebSocket in Golang.
 
 
-## Code Style
+### Code Style
 
 The Types will be named in a single word with Capital Initial.
 (So the name of the type must has only one word.)
@@ -103,5 +114,5 @@ email: fr440305@gmail.com
 
 ## Bugs
 
-- Sometimes, it will crash.
+- (fixed) Sometimes, it will crash.
 Maybe is has infinite loop somewhere. (apr, 1, 2017)

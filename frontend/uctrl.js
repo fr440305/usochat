@@ -6,10 +6,9 @@ _CANV_MASK_.ontouchmove = function(e) {
 }
 _CANV_PAINT_.onmousedown = function () {
 	_CANV_PAINT_.onmousemove = function (e) {
-		//FIXME - screenX does not works very well.
-		var _x = e.screenX;
-		var _y = e.screenY;
-		console.log(_x, ", ", _y);
+		var _x = e.pageX;
+		var _y = e.pageY;
+		//console.log(_x, ", ", _y);
 		e.preventDefault();
 		_CANV_PAINT_.getContext("2d").fillStyle = "green";
 		_CANV_PAINT_.getContext("2d").fillRect(_x, _y, 5, 5);
@@ -21,7 +20,7 @@ _CANV_PAINT_.onmouseup = function () {
 _CANV_PAINT_.addEventListener("touchmove", function(e) {
 	var _x = e.changedTouches[0].pageX - document.body.scrollLeft;
 	var _y = e.changedTouches[0].pageY - document.body.scrollTop;
-	console.log(_x, ", ", _y, document.body.scrollTop);
+	//console.log(_x, ", ", _y, document.body.scrollTop);
 	e.preventDefault();
 	_CANV_PAINT_.getContext("2d").fillStyle = "green";
 	_CANV_PAINT_.getContext("2d").fillRect(_x, _y, 5, 5);
@@ -114,8 +113,27 @@ if (window.WebSocket != undefined) {
 		}
 	};
 	_SEND_PAINT_CONFIRM_.onclick = function () {
-		console.log(_CANV_PAINT_.toDataURL());
-		_IMG_TEST_.src = _CANV_PAINT_.toDataURL();
+		//compress the doodle:
+		var cx = _CANV_PAINT_.getContext("2d");
+		var cx_temp = _CANV_TEMP_.getContext("2d");
+		var w = _CANV_PAINT_.width;
+		var h = _CANV_PAINT_.height;
+		var scale_rate;
+		//compress - calculate the scale rate:
+		console.log (w, h);
+		if (w >= h) {
+			//w * r = 200 ==> r = 200 / w;
+			scale_rate = 200 / w;
+		} else {
+			//h * r = 200 ==> r = 200 / w;
+			scale_rate = 200 / h;
+		}
+		console.log (w, h, scale_rate);
+		_CANV_TEMP_.width = w * scale_rate;
+		_CANV_TEMP_.height = h * scale_rate;
+		cx_temp.drawImage(_CANV_PAINT_, 0, 0, w*scale_rate, h*scale_rate);
+		//console.log(_CANV_PAINT_.toDataURL());
+		_IMG_TEST_.src = _CANV_TEMP_.toDataURL();
 		_SEND_CANCEL_.onclick();
 	};
 	_SEND_CONFIRM_.onclick = function () {

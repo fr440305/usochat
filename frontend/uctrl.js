@@ -94,8 +94,6 @@ if (window.WebSocket != undefined) {
 		} else {
 			//error: invalid msg.
 		}
-
-
 	};
 	ws_conn.onerror = function (e) {
 		_TEST_.innerHTML += ("<p>" + e.data + "</p>");

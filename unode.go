@@ -31,7 +31,7 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 			//the client was closed.
 			_ulog("\n\n\nNode.handleUser", "A user has been leaving!")
 			msg_to_center = newMsg(N)
-			msg_to_center.setDescription("user-logout")
+			msg_to_center.setDescription("logout")
 			N.c_ptr.msg_queue <- *msg_to_center
 			//FIXME - do not remove my self here.
 			//make center to do this.
@@ -60,7 +60,7 @@ func (N *Node) handleCenter() {
 		select {
 		case msg = <-N.msg_from_center:
 			_ulog("Node.handleCenter", "receives this Msg from center:", msg.toJSON())
-			if msg.description == "user-logout-0" {
+			if msg.description == "logout-0" {
 				_ulog("Node.handleCenter", "exits.")
 				return
 			} else {

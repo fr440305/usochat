@@ -9,7 +9,6 @@
 
 package main
 
-//import "fmt"
 import "html"
 import "encoding/json"
 
@@ -24,7 +23,7 @@ func newMsg(source_node *Node) *Msg {
 	res.source_node = source_node
 	res.description = ""
 	res.content = []string{}
-	//fmt.Println("newMsg", res)
+	//_ulog("newMsg", res)
 	return res
 }
 

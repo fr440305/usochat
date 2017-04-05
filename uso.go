@@ -9,11 +9,11 @@
 
 package main
 
-import "fmt"
 import "net/http"
 
 func main() {
-	fmt.Println("_msin", "http://127.0.0.1:9999")
+	_ulogSet(true)
+	_ulog("_main", "http://127.0.0.1:9999")
 	var center = newCenter()
 	go center.handleNodes()
 	//To provide the webpages to the client:
@@ -24,7 +24,7 @@ func main() {
 		go center.newNode(w, r).run(if_node_exit)
 		select {
 		case <-if_node_exit:
-			fmt.Println("_main", "A node exit.")
+			_ulog("_main", "A node exit.")
 			return
 		}
 	})

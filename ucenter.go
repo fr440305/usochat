@@ -116,6 +116,13 @@ func (C *Center) handleNodes() {
 				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
 				_ulog("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
 				boardcast_msg = receive_msg.msgCopy('*')
+			} else if rec_msg_desp == "msg-pic" {
+				//picture.
+				_ulog("Center.handleNodes", "received a picture.")
+				response_msg = receive_msg.msgCopy('0')
+				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
+				//_ulog("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
+				boardcast_msg = receive_msg.msgCopy('*')
 			} else {
 				//error
 			}

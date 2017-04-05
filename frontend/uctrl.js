@@ -76,6 +76,7 @@ if (window.WebSocket != undefined) {
 	ws_conn.onmessage = function(e) {
 		//e.data will be jsonlified later on.
 		//_RECEIVED_.innerHTML += ("<p>" + e.data + "</p>"); //test mode.
+		console.log(e.data);
 		var msg_content = JSON.parse(e.data);
 		var msg_desp = "";
 		if (msg_content["description"] !== undefined) {
@@ -86,10 +87,12 @@ if (window.WebSocket != undefined) {
 		if (msg_desp === "login-0") {
 			msg_content = msg_content["content"]; // now, msg_content is a string array.
 			for (var i = 0; i < msg_content.length; i++) {
+				//show the chatting history.
 				_RECEIVED_.innerHTML += ("<p>" + msg_content[i] + "</p>");
 			}
 		} else if (msg_desp === "login-*") {
 			msg_content = msg_content["content"][0]; // now, msg_content is a string array.
+			//show the amount of people online.
 			_ONLINER_.innerHTML = msg_content;
 		} else if (msg_desp === "msg-text-0") {
 			// ... //
@@ -101,6 +104,7 @@ if (window.WebSocket != undefined) {
 		} else if (msg_desp === "msg-pic-0") {
 		} else if (msg_desp === "msg-pic-*") {
 			//picture boardcast...
+			_RECEIVED_.innerHTML += ("<p><img src=" + msg_content["content"][0] + "></img></p>");
 		} else if (msg_desp === "logout-*") {
 			msg_content = msg_content["content"][0]; // now, msg_content is a string array.
 			_ONLINER_.innerHTML = msg_content;
@@ -135,6 +139,7 @@ if (window.WebSocket != undefined) {
 		var w = _CANV_PAINT_.width;
 		var h = _CANV_PAINT_.height;
 		var scale_rate;
+		var json_msg;
 		//compress - calculate the scale rate:
 		console.log (w, h);
 		if (w >= h) {
@@ -148,8 +153,15 @@ if (window.WebSocket != undefined) {
 		_CANV_TEMP_.width = w * scale_rate;
 		_CANV_TEMP_.height = h * scale_rate;
 		cx_temp.drawImage(_CANV_PAINT_, 0, 0, w*scale_rate, h*scale_rate);
+		console.log(_CANV_TEMP_.toDataURL().length);
 		//console.log(_CANV_PAINT_.toDataURL());
-		_IMG_TEST_.src = _CANV_TEMP_.toDataURL();
+		json_msg = {
+			"source_node":"",
+			"description":"msg-pic",
+			"content":[_CANV_TEMP_.toDataURL()]
+		}
+		ws_conn.send(JSON.stringify(json_msg));
+		//_IMG_TEST_.src = _CANV_TEMP_.toDataURL();
 		_SEND_CANCEL_.onclick();
 	};
 

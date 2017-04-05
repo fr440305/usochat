@@ -93,7 +93,7 @@ func (C *Center) handleNodes() {
 			_ulog("Center.handleNodes", "receive this Msg from node:", receive_msg.toJSON())
 			//check:
 			rec_msg_desp = receive_msg.description
-			if rec_msg_desp == "user-login" {
+			if rec_msg_desp == "login" {
 				for _, prev_msg := range C.dialogs {
 					_ulog("Center.handleNodes", chat_hist)
 					chat_hist = append(chat_hist, prev_msg.content[:]...)
@@ -102,19 +102,26 @@ func (C *Center) handleNodes() {
 				response_msg.setContent(chat_hist)
 				boardcast_msg = receive_msg.msgCopy('*')
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
-			} else if rec_msg_desp == "user-logout" {
+			} else if rec_msg_desp == "logout" {
 				//TODO - remove this node.
 				response_msg = receive_msg.msgCopy('0')
 				response_msg.setContent([]string{"tara"})
 				boardcast_msg = receive_msg.msgCopy('*')
 				boardcast_msg.setContent([]string{strconv.Itoa(C.getOnliner())})
-			} else if rec_msg_desp == "user-msg-text" {
+			} else if rec_msg_desp == "msg-text" {
 				//save the message into Center.dialogs
 				_ulog("Center.handleNodes", "saves this msg to chattinghist slice.")
 				C.dialogs = append(C.dialogs, receive_msg.msgCopy(' '))
 				response_msg = receive_msg.msgCopy('0')
 				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
 				_ulog("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
+				boardcast_msg = receive_msg.msgCopy('*')
+			} else if rec_msg_desp == "msg-pic" {
+				//picture.
+				_ulog("Center.handleNodes", "received a picture.")
+				response_msg = receive_msg.msgCopy('0')
+				response_msg.setContent([]string{"send successful"}) //should be chatting hist.
+				//_ulog("Center.handleNodes", "__DEBUG_RESPMSG__", response_msg.toJSON)
 				boardcast_msg = receive_msg.msgCopy('*')
 			} else {
 				//error

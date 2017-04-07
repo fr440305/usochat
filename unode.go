@@ -40,9 +40,6 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("logout")
 			N.c_ptr.msg_queue <- *msg_to_center
-			//FIXME - do not remove my self here.
-			//make center to do this.
-			N.c_ptr.removeNode(N)
 			ifexit <- true
 			_ulog("Node.handleUser", "exits")
 			return
@@ -50,7 +47,7 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 		//check the content that client sent,
 		_ulog("\nNode.handleUser", "received JSON:", str_msg_cx)
 		msg_to_center = newMsg(N)
-		//TODO - check the error:
+		//TODO - check the error//
 		msg_to_center.parseJSON(str_msg_cx)
 		//and push it to center.
 		_ulog("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())

@@ -79,6 +79,12 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 	return nil //TODO - handle the error//
 }
 
+//The follwoing method returns the number of people online.
+//For example, if there are three people online, then it will return (3, "3").
+func (C *Center) getOnliner() (int, string) {
+	return len(C.nodes), string(strconv.Itoa(len(C.nodes)))
+}
+
 //This method is the major method of Center type.
 //It extracts the message in Center.msg_queue, and check it.
 //Then it creates a response message and a boardcast message.
@@ -154,10 +160,4 @@ func (C *Center) handleNodes() {
 			}
 		}
 	}
-}
-
-//The follwoing method returns the number of people online.
-//For example, if there are three people online, then it will return (3, "3").
-func (C *Center) getOnliner() (int, string) {
-	return len(C.nodes), string(strconv.Itoa(len(C.nodes)))
 }

@@ -1,5 +1,6 @@
-*.sh
+*.util.sh
 *.swp
 *.log
 *.out
+log
 uso

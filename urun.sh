@@ -26,6 +26,9 @@ build () {
 };
 
 #The following function runs the uso.out.
+#Usage:
+# { echo noise; }|run;
+# { echo quite; }|run;
 run () {
 	read run_mode;
 	echo $run_mode;

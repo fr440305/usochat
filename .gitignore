@@ -1,4 +1,4 @@
-*.util.sh
+util.*.sh
 *.swp
 *.log
 *.out

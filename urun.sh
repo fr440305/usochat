@@ -54,6 +54,12 @@ parseArgs () {
 			run noise;
 		}; elif [[ $command == qstart ]]; then {
 			run quite;
+		}; elif [[ $command == clean ]]; then {
+			rm ./*.log;
+			rm ./*.out;
+			rm ./*.swp;
+			echo "The work directory has been cleaned.";
+			exit 0;
 		}; else {
 			echo $command is an invalid command!;
 		}; fi;

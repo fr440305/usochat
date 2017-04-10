@@ -79,7 +79,7 @@ func (M *Msg) toJSON() string {
 	if M.source_node == nil {
 		source_node_iden = ""
 	} else {
-		source_node_iden = M.source_node.iden
+		source_node_iden = M.source_node.idString()
 	}
 	var user_msg = struct {
 		SouceNode   string   `json:"source_node"`

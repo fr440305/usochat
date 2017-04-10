@@ -12,15 +12,22 @@ type Node struct {
 	msg_from_center chan Msg
 	c_ptr           *Center         // a pointer to center.
 	conn            *websocket.Conn //connent client to node
-	iden            string          // the identification for node.
+	nid             int64           // the identification for node.
 }
 
-//listener
-//This goroutine receive msgs in the form of JSON from client.
+//The following function returns the string form of the node id.
+func (N *Node) idString() string {
+	//TODO//
+	return ""
+}
+
+//The following function will be called in a go statment because it is a theard.
+//It extracts the JSON string message form the user and
+//handle this message. It will send the message to center if nessesary.
 func (N *Node) handleUser(ifexit chan<- bool) {
 	var err error
 	var msg_cx []byte      // the byte array from user.
-	var str_msg_cx string  // the conversion for byte array.
+	var str_msg_cx string  // the conversion for byte array. Will be a JSON string.
 	var msg_to_center *Msg // the message that needs to send to center.
 	for {
 		//the code will be blocked here(conn.ReadMessage():
@@ -33,9 +40,6 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("logout")
 			N.c_ptr.msg_queue <- *msg_to_center
-			//FIXME - do not remove my self here.
-			//make center to do this.
-			N.c_ptr.removeNode(N)
 			ifexit <- true
 			_ulog("Node.handleUser", "exits")
 			return
@@ -43,7 +47,7 @@ func (N *Node) handleUser(ifexit chan<- bool) {
 		//check the content that client sent,
 		_ulog("\nNode.handleUser", "received JSON:", str_msg_cx)
 		msg_to_center = newMsg(N)
-		//TODO - check the error:
+		//TODO - check the error//
 		msg_to_center.parseJSON(str_msg_cx)
 		//and push it to center.
 		_ulog("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())

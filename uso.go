@@ -10,11 +10,14 @@
 package main
 
 import "net/http"
+import "syscall"
 
 func main() {
+	var center = newCenter()
+	var pid = syscall.Getpid()
 	_ulogSet(true)
 	_ulog("_main", "http://127.0.0.1:9999")
-	var center = newCenter()
+	_ulog("@pm", "pid = ", pid)
 	go center.handleNodes()
 	//To provide the webpages to the client:
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))

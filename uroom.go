@@ -1,4 +1,4 @@
-//FileName: ucenter.go
+//FileName: uroom.go
 //Description: This file defined a type called Center.
 
 package main
@@ -7,57 +7,17 @@ import "net/http"
 import "github.com/gorilla/websocket"
 import "strconv"
 
-//The duty of the following type, `Center`, is to handle the messages comes from Nodes.
-//It receives messages in msg_queue, which are come from Nodes, and then checks them.
-//Then, Center will create two catagories of message: response message and boardcast message.
-//Finally, Center will send the response message to the Node which send the message to Center.msg_queue,
-//and send the boardcast message to all the nodes.
-
-type Center struct {
+type Room struct {
+	rid       uint64
 	msg_queue chan Msg           //Nodes will push their messages here.
-	dialogs   []*Msg             //Chatting history
-	nodes     []*Node            //All the nodes.
+	msg_hist  []Msg              //history messages.
+	nodes     []Node             //All the nodes.
 	upgrader  websocket.Upgrader //Constant.
-}
-
-//The following constructor creates a new Center instance and returns it.
-func newCenter() *Center {
-	_ulog("_newCenter")
-	return &Center{
-		msg_queue: make(chan Msg),
-		dialogs:   []*Msg{},
-		//dialogs:   *new([]*Msg),
-		nodes: []*Node{},
-		upgrader: websocket.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-		},
-	}
-}
-
-//If a new user opens the website, a new http.Request and a new http.ResponseWriter will also be created.
-//The following method(it is also a constructor. Only center can create node.) extracts the
-//ResponseWriter(w), and the Request(r).
-//Then it will create a node that `maps` to that user, and push it into C.nodes.
-//Finallly, it will return that node.
-func (C *Center) newNode(w http.ResponseWriter, r *http.Request) *Node {
-	var err error
-	var res = new(Node)
-	_ulog("\n\n\nCenter.newNode", "A new node goes in!")
-	res.msg_from_center = make(chan Msg)
-	res.c_ptr = C
-	res.conn, err = C.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		_ulog("fatal - Center.newNode", "cannot create websocket.conn")
-	}
-	//TODO - add a node iden allocation.
-	C.nodes = append(C.nodes, res)
-	return res
 }
 
 //The following method removes the useless node from Center.nodes.
 //If the node cannot be found, it returns a error.
-func (C *Center) removeNode(rm_node *Node) error {
+func (R *Room) removeNode(rm_node *Node) error {
 	//TODO - handle the error //
 	var i = 0
 	var node_ptr *Node = nil
@@ -71,7 +31,7 @@ func (C *Center) removeNode(rm_node *Node) error {
 }
 
 //This method send message to all the nodes.
-func (C *Center) boardcast(boardcast_msg Msg) error {
+func (R *Room) boardcast(boardcast_msg Msg) error {
 	//boardcast_msg.description = string(append([]byte(boardcast_msg.description), '-', '*'))
 	for _, N := range C.nodes {
 		N.msg_from_center <- boardcast_msg
@@ -79,9 +39,9 @@ func (C *Center) boardcast(boardcast_msg Msg) error {
 	return nil //TODO - handle the error//
 }
 
-//The follwoing method returns the number of people online.
+//The follwoing method returns the number of people in this room.
 //For example, if there are three people online, then it will return (3, "3").
-func (C *Center) getOnliner() (int, string) {
+func (R *Room) getNumUser() (int, string) {
 	return len(C.nodes), string(strconv.Itoa(len(C.nodes)))
 }
 
@@ -91,7 +51,7 @@ func (C *Center) getOnliner() (int, string) {
 //Then it sends the response message to the Node which the oringinal message comes from.
 //Then if sends the boardcast message to all the nodes.
 //Notice: Use go statment to call this function.
-func (C *Center) handleNodes() {
+func (R *Room) handleNodes() {
 	var receive_msg Msg
 	var response_msg *Msg
 	var boardcast_msg *Msg

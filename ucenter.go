@@ -35,6 +35,11 @@ func newCenter() *Center {
 	}
 }
 
+// TODO
+func (C *Center) newRoom() *Room {
+	return nil
+}
+
 //If a new user opens the website, a new http.Request and a new http.ResponseWriter will also be created.
 //The following method(it is also a constructor. Only center can create node.) extracts the
 //ResponseWriter(w), and the Request(r).

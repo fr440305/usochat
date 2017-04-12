@@ -60,6 +60,9 @@ parseArgs () {
 			rm ./*.swp;
 			echo "The work directory has been cleaned.";
 			exit 0;
+		}; elif [[ $command == project ]]; then {
+			# count the scale of this project.
+			# TODO.
 		}; else {
 			echo $command is an invalid command!;
 		}; fi;

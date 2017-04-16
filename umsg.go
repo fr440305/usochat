@@ -13,14 +13,16 @@ import "html"
 import "encoding/json"
 
 type Msg struct {
-	source_node *Node
+	node        *Node
+	room        *Room
 	description string
 	content     []string
 }
 
 func newMsg(source_node *Node) *Msg {
 	var res = new(Msg)
-	res.source_node = source_node
+	res.node = source_node
+	res.room = source_node.room
 	res.description = ""
 	res.content = []string{}
 	//_ulog("newMsg", res)

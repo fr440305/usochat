@@ -1,7 +1,9 @@
-// USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
-// USE SLICE EVERYWHERE - DO NOT USE container/list.
-// 不光要思考架构，还要思考架构的迭代与演化。
-// 要牢记：软件是长出来的。
+//FileName:
+//	unode.go
+//FileDescription:
+//	This go source file defined three go type: Usor, Room, and Center.
+//Author(s):
+//	__HUO_YU__
 
 package main
 
@@ -11,10 +13,10 @@ import "strconv"
 
 //type Usor maps to a client.
 type Usor struct {
-	msg_from_center chan Msg
-	c_ptr           *Center         // a pointer to center.
-	conn            *websocket.Conn //connent client to node
-	nid             int64           // the identification for node.
+	msgchan chan Msg
+	room    *Room
+	conn    *websocket.Conn //connent client to node
+	nid     int64           // the identification for node.
 }
 
 //The following function returns the string form of the node id.
@@ -59,7 +61,7 @@ func (U *Usor) handleUser(ifexit chan<- bool) {
 
 //responser
 //fetch the msg from center, and send it to client.
-func (U *Usor) handleCenter() {
+func (U *Usor) handleRoom() {
 	var msg Msg             // The message received from center.
 	var json_to_user string // The JSON string that needs to be sent to user.
 	for {
@@ -210,4 +212,15 @@ func (R *Room) handleUsors() {
 			}
 		}
 	}
+}
+
+type Center struct {
+}
+
+func (C *Center) newRoom() *Room {
+	return nil
+}
+
+func (C *Center) newNode() *Node {
+	return nil
 }

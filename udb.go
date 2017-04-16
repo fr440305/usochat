@@ -13,3 +13,7 @@ func _ulog(G ...interface{}) {
 		fmt.Println(G...)
 	}
 }
+
+//I have not determined what is the duty of this type yet.
+type Debugger struct {
+}

@@ -25,23 +25,20 @@ func (U *Usor) idString() string {
 	return ""
 }
 
-//The following function will be called in a go statment because it is a theard.
-//It extracts the JSON string message form the user and
-//handle this message. It will send the message to center if nessesary.
 func (U *Usor) handleUser(ifexit chan<- bool) {
 	var err error
-	var msg_cx []byte      // the byte array from user.
-	var str_msg_cx string  // the conversion for byte array. Will be a JSON string.
-	var msg_to_center *Msg // the message that needs to send to center.
+	var msg_cx []byte
+	var str_msg_cx string
+	var msg_to_center *Msg
 	for {
 		//the code will be blocked here(conn.ReadMessage():
 		//but don't worry, becase it's in the go statment.
-		_, msg_cx, err = N.conn.ReadMessage()
+		_, msg_cx, err = U.conn.ReadMessage()
 		str_msg_cx = string(msg_cx[:])
+		msg_to_center = newMsg(U)
 		if err != nil {
 			//the client was closed.
 			_ulog("\n\n\nUsor.handleUser", "A user has been leaving!")
-			msg_to_center = newMsg(N)
 			msg_to_center.setDescription("logout")
 			N.c_ptr.msg_queue <- *msg_to_center
 			ifexit <- true
@@ -50,7 +47,6 @@ func (U *Usor) handleUser(ifexit chan<- bool) {
 		}
 		//check the content that client sent,
 		_ulog("\nUsor.handleUser", "received JSON:", str_msg_cx)
-		msg_to_center = newMsg(N)
 		//TODO - check the error//
 		msg_to_center.parseJSON(str_msg_cx)
 		//and push it to center.

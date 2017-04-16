@@ -13,12 +13,12 @@
 printHelp () {
 	echo "";
 	echo "USO is a simple chatting website, and this file,";
-	echo "urun.sh, is the booter of this website's server.";
+	echo "uso.sh, is the booter of this website's server.";
 	echo "";
 	echo "Usage:";
-	echo "        [./]urun.sh <command> <flags>";
+	echo "        bash uso.sh <command> <flags>";
 	echo "";
-	echo "If you wanna run it, type \`urun.sh start\`.";
+	echo "If you wanna run it, type \`uso.sh start\`.";
 	echo "";
 };
 
@@ -62,7 +62,8 @@ parseArgs () {
 			exit 0;
 		}; elif [[ $command == project ]]; then {
 			# count the scale of this project.
-			# TODO.
+			# TODO
+			echo TODO.
 		}; else {
 			echo $command is an invalid command!;
 		}; fi;

@@ -1,11 +1,5 @@
-// USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
-// USE SLICE EVERYWHERE - DO NOT USE container/list.
-// 不光要思考架构，还要思考架构的迭代与演化。
-// 要牢记：软件是长出来的。
-
-//CODE_COMPLETE:
-// --all TODOs & FIXMEs
-// - documentation: on business logic.
+//umsg.go
+//This source file defined type Msg.
 
 package main
 
@@ -13,15 +7,15 @@ import "html"
 import "encoding/json"
 
 type Msg struct {
-	node        *Node
+	usor        *Usor
 	room        *Room
 	description string
 	content     []string
 }
 
-func newMsg(source_node *Node) *Msg {
+func newMsg(source_usor *Node) *Msg {
 	var res = new(Msg)
-	res.node = source_node
+	res.usor = source_usor
 	res.room = source_node.room
 	res.description = ""
 	res.content = []string{}

@@ -1,9 +1,6 @@
-//FileName:
-//	unode.go
-//FileDescription:
-//	This go source file defined three go type: Usor, Room, and Center.
-//Author(s):
-//	__HUO_YU__
+//unode.go
+//This go source file defined three go type: Usor, Room, and Center.
+//Author(s): __HUO_YU__
 
 package main
 
@@ -92,15 +89,11 @@ func (U *Usor) run(ifexit chan<- bool) {
 	}
 }
 
-//FileName: uroom.go
-//Description: This file defined a type called Center.
-
 type Room struct {
 	rid       uint64
-	msg_queue chan Msg           //Usors will push their messages here.
-	msg_hist  []Msg              //history messages.
-	nodes     []Usor             //All the nodes.
-	upgrader  websocket.Upgrader //Constant.
+	msg_queue chan Msg
+	msg_hist  []Msg
+	members   []Usor
 }
 
 //The following method removes the useless node from Center.nodes.
@@ -211,6 +204,7 @@ func (R *Room) handleUsors() {
 }
 
 type Center struct {
+	ws_upgrader Websocket.Upgrader //const
 }
 
 func (C *Center) newRoom() *Room {

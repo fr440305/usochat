@@ -204,6 +204,7 @@ func (R *Room) handleUsors() {
 }
 
 type Center struct {
+	rooms       []Room
 	ws_upgrader Websocket.Upgrader //const
 }
 

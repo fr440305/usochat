@@ -43,31 +43,38 @@ run () {
 #The following function extracts the arguments of this bash,
 #analize it, and ...
 parseArgs () {
-	if [[ $BASH_ARGC -eq 0 ]]; then {
+	command=$1;
+	arg=$2;
+	if [[ $command == "" ]]; then {
 		#$ urun.sh;
 		printHelp;
 	}; else {
 		build;
-		command=${BASH_ARGV[$(($BASH_ARGC-1))]};
 		echo The command is $command;
 		if [[ $command == start ]]; then {
-			run noise;
-		}; elif [[ $command == qstart ]]; then {
-			run quite;
+			if [[ $arg == quietly ]]; then {
+				run quite;
+			} elif [[ $arg == noisely ]]; then {
+				run noise;
+			}; else {
+				echo "type: $ bash uso.sh start [quitely | noisely];";
+			}; fi;
 		}; elif [[ $command == clean ]]; then {
 			rm ./*.log;
 			rm ./*.out;
 			rm ./*.swp;
 			echo "The work directory has been cleaned.";
 			exit 0;
-		}; elif [[ $command == project ]]; then {
+		}; elif [[ $command == doc ]]; then {
+			echo TODO;
+		}; elif [[ $command == spec ]]; then {
 			# count the scale of this project.
 			# TODO
-			echo TODO.
+			echo TODO;
 		}; else {
-			echo $command is an invalid command!;
+			echo "$command is an invalid command!";
 		}; fi;
 	}; fi;
 };
 
-parseArgs;
+parseArgs $1 $2 $3 $4 $5 $6;

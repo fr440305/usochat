@@ -26,6 +26,16 @@ build () {
 	go build -o ./u.out ./*.go;
 };
 
+createSpecPage () {
+	html_page_header='
+<!doctype html>
+<html><head><title>USO Project Specification</title></head>
+<body> ';
+	html_page_tail='</body></html>';
+	echo "" > ./frontend/spec.0.html;
+	echo $html_page_header >> ./frontend/spec.0.html;
+	echo $html_page_tail >> ./frontend/spec.0.html;
+};
 #The following function runs the uso.out.
 #Usage:
 run () {
@@ -70,6 +80,7 @@ parseArgs () {
 		}; elif [[ $command == spec ]]; then {
 			# count the scale of this project.
 			# TODO
+			createSpecPage;
 			echo TODO;
 		}; else {
 			echo "$command is an invalid command!";

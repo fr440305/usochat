@@ -32,9 +32,9 @@ createSpecPage () {
 <html><head><title>USO Project Specification</title></head>
 <body> ';
 	html_page_tail='</body></html>';
-	echo "" > ./frontend/spec.0.html;
-	echo $html_page_header >> ./frontend/spec.0.html;
-	echo $html_page_tail >> ./frontend/spec.0.html;
+	echo "" > ./frontend/spec.html;
+	echo $html_page_header >> ./frontend/spec.html;
+	echo $html_page_tail >> ./frontend/spec.html;
 };
 #The following function runs the uso.out.
 #Usage:

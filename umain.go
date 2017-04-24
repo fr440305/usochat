@@ -13,18 +13,17 @@ import "net/http"
 import "syscall"
 
 func main() {
-	var center = newCenter()
+	var u_center = newCenter()
 	var pid = syscall.Getpid()
 	_ulogSet(true)
 	_ulog("_main", "http://127.0.0.1:9999")
 	_ulog("@pm", "pid = ", pid)
-	go center.handleNodes()
-	//To provide the webpages to the client:
+	u_center.run()
+	//Route:
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
-	//To handle the websocket request:
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		var if_node_exit = make(chan bool)
-		go center.newNode(w, r).run(if_node_exit)
+		center.newNode(w, r).run(if_node_exit)
 		select {
 		case <-if_node_exit:
 			_ulog("_main", "A node exit.")

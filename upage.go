@@ -5,6 +5,7 @@ type Router struct {
 }
 
 func (R *Router) route(map[string]string) error {
+	return nil
 }
 
 //Webpage renderor

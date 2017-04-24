@@ -6,6 +6,9 @@ package main
 import "html"
 import "encoding/json"
 
+const SET_DESCRIPTION byte = 1
+const SET_CONTENT byte = 2
+
 type Msg struct {
 	usor        *Usor
 	room        *Room
@@ -14,43 +17,13 @@ type Msg struct {
 }
 
 func newMsg(source_usor *Node) *Msg {
-	var res = new(Msg)
-	res.usor = source_usor
-	res.room = source_node.room
-	res.description = ""
-	res.content = []string{}
-	//_ulog("newMsg", res)
-	return res
+	return nil
 }
 
-//new_msg_type = '0' | '*' | ' '
-//'0' for response message, '*' for boardcast message.
-// ' ' for original message.
-func (M *Msg) msgCopy(new_msg_type byte) *Msg {
-	var new_description string
-	if new_msg_type == ' ' {
-		new_description = M.description
-	} else {
-		new_description = string(append([]byte(M.description), '-', new_msg_type))
-	}
-	return &Msg{
-		source_node: M.source_node,
-		description: new_description,
-		content:     M.content[:],
-	}
+func (M *Msg) clone() *Msg {
 }
 
-func (M *Msg) setDescription(description string) *Msg {
-	M.description = html.EscapeString(description)
-	return M
-}
-
-func (M *Msg) setContent(content []string) *Msg {
-	for i, str := range content {
-		content[i] = html.EscapeString(str)
-	}
-	M.content = content
-	return M
+func (M *Msg) set(set_what byte, description string, content []string) *Msg {
 }
 
 //Pay attention to the probobaly-appear errors.
@@ -61,8 +34,7 @@ func (M *Msg) parseJSON(json_raw string) error {
 		Content     []string `json:"content"`
 	}
 	json.Unmarshal([]byte(json_raw), &user_msg)
-	M.setDescription(user_msg.Description)
-	M.setContent(user_msg.Content)
+	M.set(SET_DESCRIPTION|SET_CONTENT, user_msg.Description, user_msg.Content)
 	return nil
 }
 

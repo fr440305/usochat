@@ -23,7 +23,7 @@ printHelp () {
 };
 
 build () {
-	go build -o ./uso.out ./*.go;
+	go build -o ./u.out ./*.go;
 };
 
 #The following function runs the uso.out.
@@ -33,10 +33,10 @@ run () {
 	if [[ $1 == quite ]]; then {
 		#echo $run_mode;
 		#echo "--quite";
-		./uso.out 1>./u.std.log 2>./u.err.log;
+		./u.out 1>./u.std.log 2>./u.err.log;
 	}; elif [[ $1 == noise ]]; then {
 		#echo "--noise";
-		./uso.out;
+		./u.out;
 	}; fi;
 };
 

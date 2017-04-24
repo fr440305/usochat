@@ -13,24 +13,19 @@ type Usor struct {
 	msgchan chan Msg
 	room    *Room
 	conn    *websocket.Conn //connent client to node
-	nid     int64           // the identification for node.
+	nid     int64           //node id
 }
 
-//The following function returns the string form of the node id.
-func (U *Usor) Get(get_what string) (int64, string) {
+func newUsor() {
+}
+
+//eg - ("id")-->(0, "0");
+func (U *Usor) get(get_what string) (int64, string) {
 	//TODO//
-	return ""
+	return 0, ""
 }
 
-func (U *Usor) handleUser(ifexit chan<- bool) {
-}
-
-//responser
-//fetch the msg from center, and send it to client.
-func (U *Usor) handleRoom() {
-}
-
-func (U *Usor) Run() {
+func (U *Usor) run() {
 }
 
 type Room struct {
@@ -38,32 +33,35 @@ type Room struct {
 	msg_queue chan Msg
 	msg_hist  []Msg
 	members   []Usor
-	center    Center
+	center    *Center
 }
 
-func (R *Room) newNode() {
+func newRoom() {
 }
 
-func (R *Room) removeUsor(rm_usr *Usor) error {
+func (R *Room) rmUsor(rm_usr *Usor) error {
+	return nil
 }
 
 func (R *Room) boardcast(bcmsg Msg) error {
+	return nil
 }
 
-func (R *Room) Get(get_what string) (int64, string) {
+func (R *Room) get(get_what string) (int64, string) {
+	return 0, ""
 }
 
-func (R *Room) Run() {
+func (R *Room) run() {
 }
 
-func (R *Room) PushMsg(m Msg) error {
+func (R *Room) push(m Msg) error {
+	return nil
 }
 
 type Center struct {
 	rooms       []Room
-	ws_upgrader Websocket.Upgrader //const
+	ws_upgrader websocket.Upgrader //const
 }
 
-func (C *Center) NewRoom() *Room {
-	return nil
+func (C *Center) run() {
 }

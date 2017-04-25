@@ -22,13 +22,8 @@ func main() {
 	//Route:
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		var if_node_exit = make(chan bool)
-		center.newNode(w, r).run(if_node_exit)
-		select {
-		case <-if_node_exit:
-			_ulog("_main", "A node exit.")
-			return
-		}
+		newUsor(u_center.ws_upgrader, w, r).run()
+		_ulog("_main", "A Usor exit.")
 	})
 	http.ListenAndServe(":9999", nil)
 }

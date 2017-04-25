@@ -16,7 +16,8 @@ type Usor struct {
 	nid     int64           //node id
 }
 
-func newUsor() {
+func newUsor(upgdr websocket.Upgrader, w http.ResponseWriter, r *http.Request) *Usor {
+
 }
 
 //eg - ("id")-->(0, "0");
@@ -61,6 +62,10 @@ func (R *Room) push(m Msg) error {
 type Center struct {
 	rooms       []Room
 	ws_upgrader websocket.Upgrader //const
+}
+
+func newCenter() *Center {
+	return nil
 }
 
 func (C *Center) run() {

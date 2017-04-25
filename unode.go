@@ -6,7 +6,8 @@ package main
 
 import "github.com/gorilla/websocket"
 import "net/http"
-import "strconv"
+
+//import "strconv"
 
 //type Usor maps to a client.
 type Usor struct {
@@ -17,7 +18,7 @@ type Usor struct {
 }
 
 func newUsor(upgdr websocket.Upgrader, w http.ResponseWriter, r *http.Request) *Usor {
-
+	return nil
 }
 
 //eg - ("id")-->(0, "0");
@@ -31,13 +32,15 @@ func (U *Usor) run() {
 
 type Room struct {
 	rid       uint64
+	name      string
 	msg_queue chan Msg
 	msg_hist  []Msg
 	members   []Usor
 	center    *Center
 }
 
-func newRoom() {
+func newRoom() *Room {
+	return nil
 }
 
 func (R *Room) rmUsor(rm_usr *Usor) error {
@@ -59,14 +62,31 @@ func (R *Room) push(m Msg) error {
 	return nil
 }
 
+//The main server
 type Center struct {
+	pid         int //process id
+	msg_q       chan Msg
 	rooms       []Room
 	ws_upgrader websocket.Upgrader //const
 }
 
-func newCenter() *Center {
-	return nil
+func newCenter(pid int) *Center {
+	var center = new(Center)
+	center.pid = pid
+	center.msg_q = make(chan Msg)
+	center.rooms = []Room{}
+	return center
+}
+
+func (C *Center) handleRooms() {
 }
 
 func (C *Center) run() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_ulog("Center.run()", "ennn...")
+	})
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		//C.rooms[0].newUsor(C.validUsorId()).run()
+	})
+	http.ListenAndServe(":9999", nil)
 }

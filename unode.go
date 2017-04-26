@@ -12,9 +12,12 @@ import "net/http"
 //type Usor maps to a client.
 type Usor struct {
 	nid       uint64 //node id
-	msg_queue chan Msg
+	msg_queue chan *Msg
 	room      *Room
-	conn      *websocket.Conn //connent client to node
+	conn      *websocket.Conn //client <--conn--> node
+}
+
+func (U *Usor) newMsg() *Msg {
 }
 
 //eg - ("id")-->(0, "0");
@@ -29,8 +32,8 @@ func (U *Usor) run() {
 type Room struct {
 	rid       uint64
 	name      string
-	msg_queue chan Msg
-	msg_hist  []Msg
+	msg_queue chan *Msg
+	msg_hist  []*Msg
 	members   []*Usor //points to usors in Center.usorpool
 	center    *Center
 }
@@ -57,7 +60,7 @@ func (R *Room) push(m Msg) error {
 //The main server
 type Center struct {
 	pid         int //process id
-	msg_q       chan Msg
+	msg_queue   chan *Msg
 	rooms       []*Room
 	usors       []*Usor
 	ws_upgrader websocket.Upgrader //const
@@ -66,7 +69,7 @@ type Center struct {
 func newCenter(pid int) *Center {
 	var center = new(Center)
 	center.pid = pid
-	center.msg_q = make(chan Msg)
+	center.msg_q = make(chan *Msg)
 	center.newRoom("Eden")
 	_ulog("@pid@", pid)
 	return center
@@ -84,7 +87,7 @@ func (C *Center) newRoom(name string) *Room {
 	var room = new(Room)
 	room.rid = C.validRoomId()
 	room.name = name
-	room.msg_queue = make(chan Msg)
+	room.msg_queue = make(chan *Msg)
 	room.msg_hist = []Msg{}
 	room.members = []*Usor{}
 	room.center = C

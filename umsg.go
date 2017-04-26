@@ -9,16 +9,13 @@ package main
 const SET_DESCRIPTION byte = 1
 const SET_CONTENT byte = 2
 
+//The instance of Msg can only be constructed by Usor.
 type Msg struct {
 	usor    *Usor
 	room    *Room
 	center  *Center
 	summary string
 	content [][]string
-}
-
-func newMsg(source_usor *Usor, source_room *Room) *Msg {
-	return nil
 }
 
 func (M *Msg) clone() *Msg {

@@ -11,10 +11,10 @@ import "net/http"
 
 //type Usor maps to a client.
 type Usor struct {
-	msgchan chan Msg
-	room    *Room
-	conn    *websocket.Conn //connent client to node
-	nid     uint64          //node id
+	nid       uint64 //node id
+	msg_queue chan Msg
+	room      *Room
+	conn      *websocket.Conn //connent client to node
 }
 
 //eg - ("id")-->(0, "0");
@@ -73,32 +73,57 @@ func newCenter(pid int) *Center {
 }
 
 func (C Center) validRoomId() uint64 {
+	return 0
 }
 
 func (C Center) validUsorId() uint64 {
+	return 0
 }
 
 func (C *Center) newRoom(name string) *Room {
-	return nil
+	var room = new(Room)
+	room.rid = C.validRoomId()
+	room.name = name
+	room.msg_queue = make(chan Msg)
+	room.msg_hist = []Msg{}
+	room.members = []*Usor{}
+	room.center = C
+	C.rooms = append(C.rooms, room)
+	_ulog("@dat@", "Center.newRoom", C.rooms)
+	return room
 }
 
 func (C *Center) newUsor(room *Room, w http.ResponseWriter, r *http.Request) *Usor {
-
+	var usor = new(Usor)
+	var err error
+	usor.nid = C.validUsorId()
+	usor.msg_queue = make(chan Msg)
+	usor.room = room
+	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
+	if err != nil {
+		_ulog("@err@", "Center.newUsor", err.Error())
+		return nil
+	}
+	C.usors = append(C.usors, usor)
+	_ulog("@dat@", "Center.newUsor", C.usors)
+	return usor
 }
 
 //return that how many time it sent.
 func (C *Center) boardcast() int {
+	return 0
 }
 
 func (C *Center) handleRooms() error {
+	return nil
 }
 
 func (C *Center) run() {
 	http.Handle("/", http.FileServer(http.Dir("frontend")))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		_ulog("Center.run()", "/ws")
+		_ulog("@msg@", "Center.run()", "/ws")
 		C.newUsor(C.rooms[0], w, r).run()
 	})
-	go http.ListenAndServe(":9999", nil)
+	http.ListenAndServe(":9999", nil) //go func(){}
 	C.handleRooms()
 }

@@ -37,6 +37,7 @@ func (U *Usor) handleClient() {
 		msgtype, barjson, err = U.conn.ReadMessage()
 		if err != nil {
 			_ulog("@err@", "Usor.handleClient", err.Error())
+			U.conn.Close()
 			return
 		} else {
 			if msgtype == websocket.TextMessage {

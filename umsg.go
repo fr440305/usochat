@@ -28,7 +28,7 @@ func (M *Msg) clone() *Msg {
 func (M *Msg) toRoom(dest *Room) {
 }
 
-func (M *Msg) toNode(dest *Node) {
+func (M *Msg) toUsor(dest *Usor) {
 }
 
 func (M *Msg) toCenter(dest *Center) {

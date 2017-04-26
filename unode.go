@@ -29,21 +29,21 @@ func (U *Usor) get(get_what string) (int64, string) {
 
 func (U *Usor) handleClient() {
 	var msgtype int
-	var barjson []byte
+	var barjson []byte //bar = byte array
 	var strjson string
 	var err error
 	//var msg *Msg
 	for {
 		msgtype, barjson, err = U.conn.ReadMessage()
-		strjson = string(barjson)
 		if err != nil {
 			_ulog("@err@", "Usor.handleClient", err.Error())
 			return
 		} else {
 			if msgtype == websocket.TextMessage {
+				strjson = string(barjson)
 				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
 			} else if msgtype == websocket.BinaryMessage {
-				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
+				_ulog("@std@", "Usor.handleClient", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
 				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
 			} else {
@@ -58,14 +58,13 @@ func (U *Usor) handleRoom() {
 	select {
 	case msg = <-U.msg_queue:
 		//if it is a logout-ok msg, then return.
-		_ulog(msg)
-	default:
-		return
+		_ulog("@std@", "Usor.handleRoom", msg.jsonify())
 	}
 }
 
 func (U *Usor) run() {
-	U.handleClient()
+	go U.handleClient()
+	U.handleRoom()
 }
 
 type Room struct {
@@ -73,7 +72,7 @@ type Room struct {
 	name      string
 	msg_queue chan *Msg
 	msg_hist  []*Msg
-	members   []*Usor //points to usors in Center.usorpool
+	members   []*Usor
 	center    *Center
 }
 

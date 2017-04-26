@@ -14,6 +14,14 @@ func _ulog(G ...interface{}) {
 	}
 }
 
+func _usor(usor *Usor) string {
+	return ""
+}
+
+func _uroom(room *Room) string {
+	return ""
+}
+
 //I have not determined what is the duty of this type yet.
 type Debugger struct {
 }

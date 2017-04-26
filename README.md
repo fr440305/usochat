@@ -30,12 +30,12 @@ by using WebSocket.
 ### Features
 
 ```
-[Client] <-- JSON --> [Node]
-[Client] <-- JSON --> [Node]
+[Client] <-- JSON --> [Usor]
+[Client] <-- JSON --> [Usor]
 
       ... ... ... ...
 
-[Client] <--(JSON)--> [Node]
+[Client] <--(JSON)--> [Usor]
                        |  ^
                 (Msg)  |  |  (Msg)
                        V  |
@@ -44,11 +44,31 @@ by using WebSocket.
 
 ### Modules
 
-...
+```
+Notation:
 
-### Status
+*.* -> Files.
+<*> -> Types.
+(*) -> Functions.
+```
 
-...
+- unode.go
+	- <Usor>
+	- <Room>
+	- <Center>
+- urouter.go
+	- <Router>
+- umain.go
+	- (_main):func()()
+- udb.go
+	- <Debugger>
+- uso.sh
+	- (start)
+	- (clean)
+	- (project)
+	- (help)
+- udaemon.sh
+	- ...
 
 ### Dependencies
 

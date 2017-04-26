@@ -1,93 +1,171 @@
-// USE MANY MANY TINY THEARDS TO SEND OR RECEIVE EVENTS.
-// USE SLICE EVERYWHERE - DO NOT USE container/list.
-// 不光要思考架构，还要思考架构的迭代与演化。
-// 要牢记：软件是长出来的。
+//unode.go
+//This go source file defined three go type: Usor, Room, and Center.
+//Author(s): __HUO_YU__
 
 package main
 
 import "github.com/gorilla/websocket"
+import "net/http"
 
-//type Node maps to a client.
-type Node struct {
-	msg_from_center chan Msg
-	c_ptr           *Center         // a pointer to center.
-	conn            *websocket.Conn //connent client to node
-	nid             int64           // the identification for node.
+//import "strconv"
+
+//type Usor maps to a client.
+type Usor struct {
+	nid       uint64 //node id
+	msg_queue chan *Msg
+	room      *Room
+	conn      *websocket.Conn //client <--conn--> node
 }
 
-//The following function returns the string form of the node id.
-func (N *Node) idString() string {
+func (U *Usor) newMsg() *Msg {
+	return nil
+}
+
+//eg - ("id")-->(0, "0");
+func (U *Usor) get(get_what string) (int64, string) {
 	//TODO//
-	return ""
+	return 0, ""
 }
 
-//The following function will be called in a go statment because it is a theard.
-//It extracts the JSON string message form the user and
-//handle this message. It will send the message to center if nessesary.
-func (N *Node) handleUser(ifexit chan<- bool) {
+func (U *Usor) handleClient() {
+	var msgtype int
+	var barjson []byte //bar = byte array
+	var strjson string
 	var err error
-	var msg_cx []byte      // the byte array from user.
-	var str_msg_cx string  // the conversion for byte array. Will be a JSON string.
-	var msg_to_center *Msg // the message that needs to send to center.
+	//var msg *Msg
 	for {
-		//the code will be blocked here(conn.ReadMessage():
-		//but don't worry, becase it's in the go statment.
-		_, msg_cx, err = N.conn.ReadMessage()
-		str_msg_cx = string(msg_cx[:])
+		msgtype, barjson, err = U.conn.ReadMessage()
 		if err != nil {
-			//the client was closed.
-			_ulog("\n\n\nNode.handleUser", "A user has been leaving!")
-			msg_to_center = newMsg(N)
-			msg_to_center.setDescription("logout")
-			N.c_ptr.msg_queue <- *msg_to_center
-			ifexit <- true
-			_ulog("Node.handleUser", "exits")
+			_ulog("@err@", "Usor.handleClient", err.Error())
 			return
-		}
-		//check the content that client sent,
-		_ulog("\nNode.handleUser", "received JSON:", str_msg_cx)
-		msg_to_center = newMsg(N)
-		//TODO - check the error//
-		msg_to_center.parseJSON(str_msg_cx)
-		//and push it to center.
-		_ulog("Node.handleUser", "send this msg to center:", msg_to_center.toJSON())
-		N.c_ptr.msg_queue <- *msg_to_center
-	}
-}
-
-//responser
-//fetch the msg from center, and send it to client.
-func (N *Node) handleCenter() {
-	var msg Msg             // The message received from center.
-	var json_to_user string // The JSON string that needs to be sent to user.
-	for {
-		select {
-		case msg = <-N.msg_from_center:
-			_ulog("Node.handleCenter", "receives this Msg from center:", msg.toJSON())
-			if msg.description == "logout-0" {
-				_ulog("Node.handleCenter", "exits.")
-				return
+		} else {
+			if msgtype == websocket.TextMessage {
+				strjson = string(barjson)
+				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
+			} else if msgtype == websocket.BinaryMessage {
+				_ulog("@std@", "Usor.handleClient", msgtype, barjson)
+			} else if msgtype == websocket.CloseMessage {
+				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
 			} else {
-				msg.source_node = N
-				json_to_user = msg.toJSON()
-				_ulog("Node.handleCenter", "Send this json to user:", json_to_user)
-				N.conn.WriteMessage(websocket.TextMessage, []byte(json_to_user))
+				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
 			}
 		}
 	}
 }
 
-//use go statment to call this func
-func (N *Node) run(ifexit chan<- bool) {
-	//var err error
-	var if_listener_exit = make(chan bool)
-	go N.handleUser(if_listener_exit)
-	go N.handleCenter()
-	_ulog("Node.run")
+func (U *Usor) handleRoom() {
+	var msg *Msg
 	select {
-	case <-if_listener_exit:
-		ifexit <- true
-		_ulog("Node.run", "exits")
-		return
+	case msg = <-U.msg_queue:
+		//if it is a logout-ok msg, then return.
+		_ulog("@std@", "Usor.handleRoom", msg.jsonify())
 	}
+}
+
+func (U *Usor) run() {
+	go U.handleClient()
+	U.handleRoom()
+}
+
+type Room struct {
+	rid       uint64
+	name      string
+	msg_queue chan *Msg
+	msg_hist  []*Msg
+	members   []*Usor
+	center    *Center
+}
+
+func (R *Room) rmUsor(rm_usr *Usor) error {
+	return nil
+}
+
+func (R *Room) boardcast(bcmsg Msg) error {
+	return nil
+}
+
+func (R *Room) get(get_what string) (int64, string) {
+	return 0, ""
+}
+
+func (R *Room) run() {
+}
+
+func (R *Room) push(m Msg) error {
+	return nil
+}
+
+//The main server
+type Center struct {
+	pid         int //process id
+	msg_queue   chan *Msg
+	rooms       []*Room
+	usors       []*Usor
+	ws_upgrader websocket.Upgrader //const
+}
+
+func newCenter(pid int) *Center {
+	var center = new(Center)
+	center.pid = pid
+	center.msg_queue = make(chan *Msg)
+	center.newRoom("Eden")
+	_ulog("@pid@", pid)
+	return center
+}
+
+func (C Center) validRoomId() uint64 {
+	return 0
+}
+
+func (C Center) validUsorId() uint64 {
+	return 0
+}
+
+func (C *Center) newRoom(name string) *Room {
+	var room = new(Room)
+	room.rid = C.validRoomId()
+	room.name = name
+	room.msg_queue = make(chan *Msg)
+	room.msg_hist = []*Msg{}
+	room.members = []*Usor{}
+	room.center = C
+	C.rooms = append(C.rooms, room)
+	_ulog("@dat@", "Center.newRoom", C.rooms)
+	return room
+}
+
+func (C *Center) newUsor(room *Room, w http.ResponseWriter, r *http.Request) *Usor {
+	var usor = new(Usor)
+	var err error
+	usor.nid = C.validUsorId()
+	usor.msg_queue = make(chan *Msg)
+	usor.room = room
+	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
+	if err != nil {
+		_ulog("@err@", "Center.newUsor", err.Error())
+		return nil
+	}
+	C.usors = append(C.usors, usor)
+	_ulog("@std@", "Center.newUsor", C.usors)
+	return usor
+}
+
+//return that how many time it sent.
+func (C *Center) boardcast() int {
+	return 0
+}
+
+func (C *Center) handleRooms() error {
+
+	return nil
+}
+
+func (C *Center) run() {
+	http.Handle("/", http.FileServer(http.Dir("frontend")))
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		_ulog("@std@", "Center.run()", "/ws")
+		C.newUsor(C.rooms[0], w, r).run()
+	})
+	http.ListenAndServe(":9999", nil) //go func(){}
+	C.handleRooms()
 }

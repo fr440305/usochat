@@ -12,7 +12,7 @@ const SET_CONTENT byte = 2
 type Msg struct {
 	usor    *Usor
 	room    *Room
-	meta    *Msg
+	center  *Center
 	summary string
 	content [][]string
 }
@@ -25,6 +25,15 @@ func (M *Msg) clone() *Msg {
 	return nil
 }
 
+func (M *Msg) toRoom(dest *Room) {
+}
+
+func (M *Msg) toNode(dest *Node) {
+}
+
+func (M *Msg) toCenter(dest *Center) {
+}
+
 func (M *Msg) set(set_what byte, description string, content []string) *Msg {
 	return nil
 }
@@ -33,7 +42,7 @@ func (M *Msg) parseJSON(json_raw string) error {
 	return nil
 }
 
-func (M *Msg) toJSON() string {
+func (M *Msg) jsonify() string {
 	return ""
 }
 

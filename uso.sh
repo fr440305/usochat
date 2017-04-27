@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#urun.sh
 #You can use this bash file if you wanna run it safely.
 
 #Usage:
@@ -23,6 +22,7 @@ printHelp () {
 };
 
 build () {
+	rm ./u.out
 	go build -o ./u.out ./*.go;
 };
 
@@ -64,7 +64,7 @@ parseArgs () {
 		if [[ $command == start ]]; then {
 			if [[ $arg == quietly ]]; then {
 				run quite;
-			} elif [[ $arg == noisely ]]; then {
+			} elif [[ $arg == noisely || $arg == "" ]]; then {
 				run noise;
 			}; else {
 				echo "type: $ bash uso.sh start [quitely | noisely];";

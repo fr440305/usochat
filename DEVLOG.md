@@ -72,3 +72,11 @@
   那你写的那些注释，在更好的解决方案下，都只是累赘而已，都是要被删掉的。再说了，只要你每天都复习一下
   自己写过的代码，就算没有注释，代码的逻辑也不会那么容易被忘记。当然，一行注释都没有的话，在大多数情况下
   也未必合适。那些清晰简洁的注释都是在后期加的。真的，相信我。
+- 想想这样的类型：```go
+type MsgHandler interface {
+	func (MH *MsgHandler) handleJsonMsg(summary string, call_back func(strjson string)(*Msg))
+	func (MH *MsgHandler) transMsg(summary, call_back func(*Msg)(*Msg))
+	func (MH MsgHandler) Serve(...) //我编不下去了
+}
+```
+  稍微有些能理解，接口这东西的用处了。之前一直都会用，但总觉得没有用的必要。仔细想想，我还是太天真了。

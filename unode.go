@@ -147,7 +147,8 @@ func (C *Center) newUsor(room *Room, w http.ResponseWriter, r *http.Request) *Us
 		return nil
 	}
 	C.usors = append(C.usors, usor)
-	_ulog("@std@", "Center.newUsor", C.usors)
+	_ulog("@std@", "Center.newUsor")
+	_usorArr(C.usors)
 	return usor
 }
 

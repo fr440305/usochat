@@ -37,17 +37,18 @@ func (U *Usor) handleClient() {
 		msgtype, barjson, err = U.conn.ReadMessage()
 		if err != nil {
 			_ulog("@err@", "Usor.handleClient", err.Error())
+			U.conn.Close()
 			return
 		} else {
 			if msgtype == websocket.TextMessage {
 				strjson = string(barjson)
-				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
+				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
 			} else if msgtype == websocket.BinaryMessage {
-				_ulog("@std@", "Usor.handleClient", msgtype, barjson)
+				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
-				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
+				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
 			} else {
-				_ulog("@std@", "Usor.handleClient", msgtype, strjson)
+				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
 			}
 		}
 	}
@@ -146,7 +147,8 @@ func (C *Center) newUsor(room *Room, w http.ResponseWriter, r *http.Request) *Us
 		return nil
 	}
 	C.usors = append(C.usors, usor)
-	_ulog("@std@", "Center.newUsor", C.usors)
+	_ulog("@std@", "Center.newUsor")
+	_usorArr(C.usors)
 	return usor
 }
 

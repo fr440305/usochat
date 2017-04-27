@@ -42,13 +42,13 @@ func (U *Usor) handleClient() {
 		} else {
 			if msgtype == websocket.TextMessage {
 				strjson = string(barjson)
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, strjson)
 			} else if msgtype == websocket.BinaryMessage {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, strjson)
 			} else {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, strjson)
 			}
 		}
 	}

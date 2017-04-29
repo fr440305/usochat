@@ -36,6 +36,7 @@ func (U *Usor) handleClient() {
 	for {
 		msgtype, barjson, err = U.conn.ReadMessage()
 		if err != nil {
+			//Gone.
 			_ulog("@err@", "Usor.handleClient", err.Error())
 			U.conn.Close()
 			return
@@ -47,8 +48,8 @@ func (U *Usor) handleClient() {
 				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
 				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
-			} else {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+			} else { //Unexpected Message.
+				_ulog("@err@", "Usor.handleClient type=", msgtype, strjson)
 			}
 		}
 	}

@@ -1,5 +1,20 @@
+/*
+ * uclient.js
+ * __HUO_YU__
+ *
+ */
+
+function Msg (source, summary, content) {
+	this.source = source;
+	this.summary = summary; //string.
+	this.content = content; //[][]string.
+};
+
+Msg.prototype.Stringify = function () {
+};
 
 function Client () {
+	this.signal = {};
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
 		console.log("@err@ Browser does not support websocket.");
@@ -9,6 +24,7 @@ function Client () {
 		);
 		this.id = { 'r': undefined, 'u': undefined };
 		this.load_events();
+		this.Join(0, undefined);
 	}
 };
 
@@ -26,13 +42,23 @@ Client.prototype.load_events = function () {
 	};
 };
 
-Client.prototype.send_txt = function (txt) {
+Client.prototype.Say = function (txt) {
 	if (this.ws_conn !== undefined) {
 		this.ws_conn.send(txt);
+	} else {
+		//error:
+		console.log("@err@", "ws_conn === undefined !");
 	}
 };
 
-Client.prototype.send_login_msg = function () {
+Client.prototype.Join = function (room_id, room_name) {
+	//If room_id == undefined, then it's a new room request.
+};
+
+Client.prototype.Gone = function () {
+};
+
+Client.prototype.Doodle = function (base_64) {
 };
 
 

@@ -13,6 +13,7 @@ import "net/http"
 type Usor struct {
 	nid       uint64 //node id
 	msg_queue chan *Msg
+	eden      *Eden
 	room      *Room
 	conn      *websocket.Conn //client <--conn--> node
 }
@@ -90,17 +91,29 @@ func (R *Room) get(get_what string) (int64, string) {
 	return 0, ""
 }
 
+func (R *Room) handleCenter() {
+}
+
+func (R *Room) handleUsors() {
+}
+
 func (R *Room) run() {
 }
 
-func (R *Room) push(m Msg) error {
-	return nil
+type Eden struct {
+	center    *Center
+	msg_queue chan *Msg
+	members   []*Usor
+}
+
+func (E *Eden) run() {
 }
 
 //The main server
 type Center struct {
 	pid         int //process id
 	msg_queue   chan *Msg
+	eden        *Eden
 	rooms       []*Room
 	usors       []*Usor
 	ws_upgrader websocket.Upgrader //const
@@ -110,7 +123,7 @@ func newCenter(pid int) *Center {
 	var center = new(Center)
 	center.pid = pid
 	center.msg_queue = make(chan *Msg)
-	center.newRoom("Eden")
+	center.newEden()
 	_ulog("@pid@", pid)
 	return center
 }
@@ -136,12 +149,19 @@ func (C *Center) newRoom(name string) *Room {
 	return room
 }
 
-func (C *Center) newUsor(room *Room, w http.ResponseWriter, r *http.Request) *Usor {
+func (C *Center) newEden() *Eden {
+	var eden = new(Eden)
+	eden.members = []*Usor{}
+	eden.center = C
+	return eden
+}
+
+func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	var usor = new(Usor)
 	var err error
 	usor.nid = C.validUsorId()
 	usor.msg_queue = make(chan *Msg)
-	usor.room = room
+	usor.eden = C.eden
 	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
 	if err != nil {
 		_ulog("@err@", "Center.newUsor", err.Error())
@@ -167,7 +187,7 @@ func (C *Center) run() {
 	http.Handle("/", http.FileServer(http.Dir("frontend")))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ulog("@std@", "Center.run()", "/ws")
-		C.newUsor(C.rooms[0], w, r).run()
+		C.newUsor(w, r).run()
 	})
 	http.ListenAndServe(":9999", nil) //go func(){}
 	C.handleRooms()

@@ -12,7 +12,7 @@ const SET_CONTENT byte = 2
 //The instance of Msg can only be constructed by Usor.
 type Msg struct {
 	usor    *Usor
-	eden    *Edne
+	eden    *Eden
 	room    *Room
 	center  *Center
 	summary string
@@ -24,6 +24,7 @@ func (M *Msg) clone() *Msg {
 }
 
 func (M *Msg) toEden(dest *Eden) {
+	dest.msg_queue <- M
 }
 
 func (M *Msg) toRoom(dest *Room) {

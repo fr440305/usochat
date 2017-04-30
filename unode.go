@@ -87,10 +87,6 @@ func (R *Room) boardcast(bcmsg Msg) error {
 	return nil
 }
 
-func (R *Room) get(get_what string) (int64, string) {
-	return 0, ""
-}
-
 func (R *Room) handleCenter() {
 }
 

@@ -22,13 +22,8 @@ func (U *Usor) newMsg() *Msg {
 	return nil
 }
 
-//eg - ("id")-->(0, "0");
-func (U *Usor) get(get_what string) (int64, string) {
-	//TODO//
-	return 0, ""
-}
-
 func (U *Usor) handleClient() {
+	_ulog("Usor.handleClient")
 	var msgtype int
 	var barjson []byte //bar = byte array
 	var strjson string
@@ -36,6 +31,7 @@ func (U *Usor) handleClient() {
 	//var msg *Msg
 	for {
 		msgtype, barjson, err = U.conn.ReadMessage()
+		_ulog("Usor.HandleClient.middle")
 		if err != nil {
 			//Gone.
 			_ulog("@err@", "Usor.handleClient", err.Error())
@@ -65,7 +61,7 @@ func (U *Usor) handleRoom() {
 	}
 }
 
-func (U *Usor) run() {
+func (U *Usor) Run() {
 	go U.handleClient()
 	U.handleRoom()
 }
@@ -77,6 +73,10 @@ type Room struct {
 	msg_hist  []*Msg
 	members   []*Usor
 	center    *Center
+}
+
+func (R *Room) addUsor(usor *Usor) error {
+	return nil
 }
 
 func (R *Room) rmUsor(rm_usr *Usor) error {
@@ -97,7 +97,7 @@ func (R *Room) handleCenter() {
 func (R *Room) handleUsors() {
 }
 
-func (R *Room) run() {
+func (R *Room) Run() {
 }
 
 type Eden struct {
@@ -106,7 +106,12 @@ type Eden struct {
 	members   []*Usor
 }
 
-func (E *Eden) run() {
+func (E *Eden) AddUsor(usor *Usor) *Usor {
+	E.members = append(E.members, usor)
+	return usor
+}
+
+func (E *Eden) Run() {
 }
 
 //The main server
@@ -128,12 +133,14 @@ func newCenter(pid int) *Center {
 	return center
 }
 
-func (C Center) validRoomId() uint64 {
-	return 0
-}
-
-func (C Center) validUsorId() uint64 {
-	return 0
+func (C *Center) newEden() *Eden {
+	var eden = new(Eden)
+	eden.members = []*Usor{}
+	eden.center = C
+	go eden.Run()
+	C.eden = eden
+	_ulog("@std@", "Center.newEden")
+	return eden
 }
 
 func (C *Center) newRoom(name string) *Room {
@@ -146,14 +153,8 @@ func (C *Center) newRoom(name string) *Room {
 	room.center = C
 	C.rooms = append(C.rooms, room)
 	_ulog("@dat@", "Center.newRoom", C.rooms)
+	go room.Run()
 	return room
-}
-
-func (C *Center) newEden() *Eden {
-	var eden = new(Eden)
-	eden.members = []*Usor{}
-	eden.center = C
-	return eden
 }
 
 func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
@@ -162,6 +163,7 @@ func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	usor.nid = C.validUsorId()
 	usor.msg_queue = make(chan *Msg)
 	usor.eden = C.eden
+	usor.room = nil
 	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
 	if err != nil {
 		_ulog("@err@", "Center.newUsor", err.Error())
@@ -170,24 +172,29 @@ func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	C.usors = append(C.usors, usor)
 	_ulog("@std@", "Center.newUsor")
 	_usorArr(C.usors)
+	_ulog("Center.newUsor", "tail")
+	go usor.Run()
 	return usor
 }
 
-//return that how many time it sent.
-func (C *Center) boardcast() int {
+func (C Center) validRoomId() uint64 {
+	return 0
+}
+
+func (C Center) validUsorId() uint64 {
 	return 0
 }
 
 func (C *Center) handleRooms() error {
-
+	//including eden.
 	return nil
 }
 
-func (C *Center) run() {
+func (C *Center) Run() {
 	http.Handle("/", http.FileServer(http.Dir("frontend")))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ulog("@std@", "Center.run()", "/ws")
-		C.newUsor(w, r).run()
+		C.eden.AddUsor(C.newUsor(w, r))
 	})
 	http.ListenAndServe(":9999", nil) //go func(){}
 	C.handleRooms()

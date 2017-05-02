@@ -23,24 +23,7 @@ func (M *Msg) clone() *Msg {
 	return nil
 }
 
-func (M *Msg) toEden(dest *Eden) {
-	dest.msg_queue <- M
-}
-
-func (M *Msg) toRoom(dest *Room) {
-}
-
-func (M *Msg) toUsor(dest *Usor) {
-}
-
-func (M *Msg) toCenter(dest *Center) {
-}
-
-func (M *Msg) set(set_what byte, description string, content []string) *Msg {
-	return nil
-}
-
-func (M *Msg) parseJSON(json_raw string) error {
+func (M *Msg) parse(json_raw string) error {
 	return nil
 }
 
@@ -51,3 +34,5 @@ func (M *Msg) jsonify() string {
 func (M Msg) Error() string {
 	return ""
 }
+
+type MsgList []*Msg

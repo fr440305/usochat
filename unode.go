@@ -11,15 +11,11 @@ import "net/http"
 
 //type Usor maps to a client.
 type Usor struct {
-	nid       uint64 //node id
-	msg_queue chan *Msg
-	eden      *Eden
-	room      *Room
-	conn      *websocket.Conn //client <--conn--> node
-}
-
-func (U *Usor) newMsg() *Msg {
-	return nil
+	name string
+	qmsg *MsgList
+	eden *Eden
+	room *Room
+	conn *websocket.Conn //client <--conn--> node
 }
 
 func (U *Usor) handleClient() {
@@ -41,6 +37,11 @@ func (U *Usor) handleClient() {
 			if msgtype == websocket.TextMessage {
 				strjson = string(barjson)
 				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+				if strjson[0] == '{' {
+					//json-form
+				} else {
+					//raw-form
+				}
 			} else if msgtype == websocket.BinaryMessage {
 				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
@@ -52,39 +53,39 @@ func (U *Usor) handleClient() {
 	}
 }
 
-func (U *Usor) handleRoom() {
-	var msg *Msg
-	select {
-	case msg = <-U.msg_queue:
-		//if it is a logout-ok msg, then return.
-		_ulog("@std@", "Usor.handleRoom", msg.jsonify())
-	}
+func (U *Usor) Run() {
+	U.handleClient()
 }
 
-func (U *Usor) Run() {
-	go U.handleClient()
-	U.handleRoom()
+func (U *Usor) BeSent(msg *Msg) *Msg {
+	return msg
+}
+
+type UsorList []*Usor
+
+func (UL *UsorList) add(usor *Usor) *Usor {
+	*UL = append(*UL, usor)
+	return usor
+}
+
+func (UL *UsorList) rm(usor *Usor) *Usor {
+	return nil
+}
+
+func (UL UsorList) boardcast(msg *Msg) *Msg {
+	return msg
+}
+
+func (UL UsorList) usorAmount() int64 {
+	return int64(len(UL))
 }
 
 type Room struct {
-	rid       uint64
-	name      string
-	msg_queue chan *Msg
-	msg_hist  []*Msg
-	members   []*Usor
-	center    *Center
-}
-
-func (R *Room) addUsor(usor *Usor) error {
-	return nil
-}
-
-func (R *Room) rmUsor(rm_usr *Usor) error {
-	return nil
-}
-
-func (R *Room) boardcast(bcmsg Msg) error {
-	return nil
+	name   string
+	qmsg   *MsgList
+	chist  [][]string //chat history
+	usors  *UsorList
+	center *Center
 }
 
 func (R *Room) handleCenter() {
@@ -96,68 +97,80 @@ func (R *Room) handleUsors() {
 func (R *Room) Run() {
 }
 
+type RoomList []*Room
+
+func (RL *RoomList) add(room *Room) *Room {
+	*RL = append(*RL, room)
+	return room
+}
+
+func (RL *RoomList) rm(room *Room) *Room {
+	return nil
+}
+
+func (RL RoomList) boardcast(msg *Msg) *Msg {
+	return nil
+}
+
+func (RL RoomList) lookup(room_name string) *Room {
+	return nil
+}
+
+func (RL RoomList) usorAmount() int64 {
+	return 0
+}
+
+func (RL RoomList) roomAmount() int64 {
+	return int64(len(RL))
+}
+
 type Eden struct {
-	center    *Center
-	msg_queue chan *Msg
-	members   []*Usor
+	center *Center
+	guests *UsorList
 }
 
-func (E *Eden) AddUsor(usor *Usor) *Usor {
-	E.members = append(E.members, usor)
-	return usor
-}
-
-func (E *Eden) Run() {
+func (E *Eden) AddUsor(usor *Usor) {
+	E.guests.add(usor)
 }
 
 //The main server
 type Center struct {
-	pid         int //process id
-	msg_queue   chan *Msg
 	eden        *Eden
-	rooms       []*Room
-	usors       []*Usor
+	rooms       *RoomList
 	ws_upgrader websocket.Upgrader //const
 }
 
 func newCenter(pid int) *Center {
 	var center = new(Center)
-	center.pid = pid
-	center.msg_queue = make(chan *Msg)
-	center.newEden()
+	center.eden = center.newEden()
 	_ulog("@pid@", pid)
 	return center
 }
 
 func (C *Center) newEden() *Eden {
 	var eden = new(Eden)
-	eden.members = []*Usor{}
 	eden.center = C
-	go eden.Run()
-	C.eden = eden
+	eden.guests = new(UsorList)
+	//C.eden = eden
 	_ulog("@std@", "Center.newEden")
 	return eden
 }
 
 func (C *Center) newRoom(name string) *Room {
 	var room = new(Room)
-	room.rid = C.validRoomId()
 	room.name = name
-	room.msg_queue = make(chan *Msg)
-	room.msg_hist = []*Msg{}
-	room.members = []*Usor{}
+	room.qmsg = new(MsgList)
+	room.chist = [][]string{}
+	room.usors = new(UsorList)
 	room.center = C
-	C.rooms = append(C.rooms, room)
 	_ulog("@dat@", "Center.newRoom", C.rooms)
-	go room.Run()
 	return room
 }
 
 func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	var usor = new(Usor)
 	var err error
-	usor.nid = C.validUsorId()
-	usor.msg_queue = make(chan *Msg)
+	usor.qmsg = new(MsgList)
 	usor.eden = C.eden
 	usor.room = nil
 	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
@@ -165,20 +178,9 @@ func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 		_ulog("@err@", "Center.newUsor", err.Error())
 		return nil
 	}
-	C.usors = append(C.usors, usor)
-	_ulog("@std@", "Center.newUsor")
-	_usorArr(C.usors)
-	_ulog("Center.newUsor", "tail")
+	//C.eden.add this usor.
 	go usor.Run()
 	return usor
-}
-
-func (C Center) validRoomId() uint64 {
-	return 0
-}
-
-func (C Center) validUsorId() uint64 {
-	return 0
 }
 
 func (C *Center) handleRooms() error {
@@ -192,6 +194,5 @@ func (C *Center) Run() {
 		_ulog("@std@", "Center.run()", "/ws")
 		C.eden.AddUsor(C.newUsor(w, r))
 	})
-	http.ListenAndServe(":9999", nil) //go func(){}
-	C.handleRooms()
+	http.ListenAndServe(":9999", nil)
 }

@@ -19,6 +19,17 @@ type Msg struct {
 	content [][]string
 }
 
+func newMsg(usor *Usor, eden *Eden, room *Room, center *Center, summary string, content [][]string) *Msg {
+	return &Msg{
+		usor:    usor,
+		eden:    eden,
+		room:    room,
+		center:  center,
+		summary: summary,
+		content: content,
+	}
+}
+
 func (M *Msg) clone() *Msg {
 	return nil
 }
@@ -32,7 +43,7 @@ func (M *Msg) jsonify() string {
 }
 
 func (M Msg) Error() string {
-	return ""
+	return M.summary
 }
 
 type MsgList []*Msg

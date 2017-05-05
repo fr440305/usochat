@@ -43,7 +43,11 @@ func (M *Msg) jsonify() string {
 }
 
 func (M Msg) Error() string {
-	return M.summary
+	if M.summary == "error" {
+		return M.content[0][0]
+	} else {
+		return "" //not an error
+	}
 }
 
 type MsgList []*Msg

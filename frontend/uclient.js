@@ -42,7 +42,7 @@ Client.prototype.load_events = function () {
 	};
 };
 
-Client.prototype.Say = function (txt) {
+Client.prototype.send_txt = function (txt) {
 	if (this.ws_conn !== undefined) {
 		this.ws_conn.send(txt);
 	} else {
@@ -51,8 +51,17 @@ Client.prototype.Say = function (txt) {
 	}
 };
 
-Client.prototype.Join = function (room_id, room_name) {
+Client.prototype.Say = function (txt) {
+	this.send_txt(txt)
+};
+
+Client.prototype.Join = function (room_name) {
+	//TODO
 	//If room_id == undefined, then it's a new room request.
+	this.send_txt(JSON.stringify({
+		"summary": "join",
+		"content": [[room_name.toString()]]
+	}));
 };
 
 Client.prototype.Gone = function () {

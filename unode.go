@@ -18,16 +18,31 @@ type Usor struct {
 	conn *websocket.Conn //client <--conn--> usor
 }
 
+func (U *Usor) join(room_name string) *Msg {
+	if U == nil {
+		_ulog("@err@ Usor.join U == nil")
+		return nil
+	}
+	if U.room != nil {
+		//cannot join
+		return newMsg(nil, nil, nil, nil, "error",
+			[][]string{[]string{"A room-usor can not join in another room."}})
+	}
+	var res_room = U.eden.ReqRoom(room_name)
+	U.room = res_room
+	return nil //good`
+}
+
 func (U *Usor) handleClient() {
-	_ulog("Usor.handleClient")
-	var msgtype int
-	var barjson []byte //bar = byte array
+	if U == nil {
+		_ulog("@err@ Usor.handleClient U == nil")
+		return
+	}
 	var strjson string
-	var err error
+	_ulog("@std@ Usor.handleClient")
 	//var msg *Msg
 	for {
-		msgtype, barjson, err = U.conn.ReadMessage()
-		_ulog("Usor.HandleClient.middle")
+		msgtype, barjson, err := U.conn.ReadMessage()
 		if err != nil {
 			//Gone.
 			_ulog("@err@", "Usor.handleClient", err.Error())
@@ -37,12 +52,8 @@ func (U *Usor) handleClient() {
 			if msgtype == websocket.TextMessage {
 				strjson = string(barjson)
 				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
-			} else if msgtype == websocket.BinaryMessage {
+			} else {
 				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
-			} else if msgtype == websocket.CloseMessage {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
-			} else { //Unexpected Message.
-				_ulog("@err@", "Usor.handleClient type=", msgtype, strjson)
 			}
 		}
 	}
@@ -53,12 +64,16 @@ func (U *Usor) Run() {
 }
 
 func (U *Usor) OnSent(msg *Msg) *Msg {
+	_ulog("@std@ Usor.OnSent Receive A Msg.", msg.summary, msg.content)
 	return msg
 }
 
 type UsorList []*Usor
 
 func (UL *UsorList) add(usor *Usor) *Usor {
+	if UL == nil || usor == nil {
+		_ulog("@err@ UsorList.add U||usor == nil")
+	}
 	*UL = append(*UL, usor)
 	return usor
 }
@@ -90,6 +105,7 @@ func (R *Room) handleUsors() {
 }
 
 func (R Room) GetChist(amount int8) [][]string {
+	return [][]string{}
 }
 
 func (R Room) OnKilled() {
@@ -108,6 +124,10 @@ func (R *Room) Run() {
 type RoomList []*Room
 
 func (RL *RoomList) add(room *Room) *Room {
+	if RL == nil || room == nil {
+		_ulog("@err@ RoomList.add RL||room == nil")
+		return nil
+	}
 	*RL = append(*RL, room)
 	return room
 }
@@ -121,6 +141,12 @@ func (RL RoomList) boardcast(msg *Msg) *Msg {
 }
 
 func (RL RoomList) lookup(room_name string) *Room {
+	for _, r := range RL {
+		if r != nil && r.name == room_name {
+			return r
+		}
+	}
+	//no room
 	return nil
 }
 
@@ -133,7 +159,13 @@ func (RL RoomList) roomAmount() int64 {
 }
 
 func (RL RoomList) list() []string {
-
+	var res = []string{}
+	for _, r := range RL {
+		if r != nil {
+			res = append(res, r.name)
+		}
+	}
+	return res
 }
 
 type Eden struct {
@@ -142,10 +174,28 @@ type Eden struct {
 }
 
 func (E Eden) ReqRoom(room_name string) *Room {
+	var res_room = E.center.rooms.lookup(room_name)
+	if res_room != nil {
+		return res_room
+	} else {
+		return E.center.NewRoom(room_name)
+	}
 }
 
 func (E *Eden) AddUsor(usor *Usor) *Usor {
+	if E == nil || usor == nil {
+		_ulog("@err@ Eden.AddUsor E||usor == nil pointer.")
+		return nil
+	}
 	E.guests.add(usor)
+	usor.OnSent(newMsg(
+		usor,
+		E,
+		nil,
+		E.center,
+		"room-name-list",
+		[][]string{E.center.RoomNameList()},
+	))
 	return usor
 }
 
@@ -159,6 +209,7 @@ type Center struct {
 func newCenter(pid int) *Center {
 	var center = new(Center)
 	center.eden = center.newEden()
+	center.rooms = new(RoomList)
 	_ulog("@pid@", pid)
 	return center
 }
@@ -172,17 +223,20 @@ func (C *Center) newEden() *Eden {
 	return eden
 }
 
-func (C *Center) newRoom(name string) *Room {
+//will be called by Eden.ReqRoom
+func (C *Center) NewRoom(name string) *Room {
 	var room = new(Room)
 	room.name = name
 	room.qmsg = new(MsgList)
 	room.chist = [][]string{}
 	room.usors = new(UsorList)
 	room.center = C
+	C.rooms.add(room)
 	_ulog("@dat@", "Center.newRoom", C.rooms)
 	return room
 }
 
+//will be called iff a new client opened.
 func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	var usor = new(Usor)
 	var err error
@@ -197,6 +251,10 @@ func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	//C.eden.add this usor.
 	go usor.Run()
 	return usor
+}
+
+func (C *Center) RoomNameList() []string {
+	return C.rooms.list()
 }
 
 func (C *Center) handleRooms() error {

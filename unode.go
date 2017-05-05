@@ -15,7 +15,7 @@ type Usor struct {
 	qmsg *MsgList
 	eden *Eden
 	room *Room
-	conn *websocket.Conn //client <--conn--> node
+	conn *websocket.Conn //client <--conn--> usor
 }
 
 func (U *Usor) handleClient() {
@@ -37,11 +37,6 @@ func (U *Usor) handleClient() {
 			if msgtype == websocket.TextMessage {
 				strjson = string(barjson)
 				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
-				if strjson[0] == '{' {
-					//json-form
-				} else {
-					//raw-form
-				}
 			} else if msgtype == websocket.BinaryMessage {
 				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
 			} else if msgtype == websocket.CloseMessage {
@@ -57,7 +52,7 @@ func (U *Usor) Run() {
 	U.handleClient()
 }
 
-func (U *Usor) BeSent(msg *Msg) *Msg {
+func (U *Usor) OnSent(msg *Msg) *Msg {
 	return msg
 }
 
@@ -94,6 +89,19 @@ func (R *Room) handleCenter() {
 func (R *Room) handleUsors() {
 }
 
+func (R Room) GetChist(amount int8) [][]string {
+}
+
+func (R Room) OnKilled() {
+}
+
+func (R Room) OnSaid(usor_name string, dialog string) {
+}
+
+func (R *Room) AddUsor(*Usor) *Usor {
+	return nil
+}
+
 func (R *Room) Run() {
 }
 
@@ -124,13 +132,21 @@ func (RL RoomList) roomAmount() int64 {
 	return int64(len(RL))
 }
 
+func (RL RoomList) list() []string {
+
+}
+
 type Eden struct {
 	center *Center
 	guests *UsorList
 }
 
-func (E *Eden) AddUsor(usor *Usor) {
+func (E Eden) ReqRoom(room_name string) *Room {
+}
+
+func (E *Eden) AddUsor(usor *Usor) *Usor {
 	E.guests.add(usor)
+	return usor
 }
 
 //The main server

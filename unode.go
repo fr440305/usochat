@@ -213,6 +213,7 @@ func (E Eden) ReqRoom(room_name string) *Room {
 	if res_room != nil {
 		return res_room
 	} else {
+		E.guests.boardcast(newMsg("newroon", [][]string{[]string{room_name}}))
 		return E.center.NewRoom(room_name)
 	}
 }

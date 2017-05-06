@@ -85,7 +85,11 @@ func (U *Usor) OnRoom(chist [][]string) {
 	)
 }
 
-func (U *Usor) OnBoradcasted(msg *Msg) {
+func (U *Usor) OnBoardcasted(msg *Msg) {
+	U.conn.WriteMessage(
+		websocket.TextMessage,
+		msg.barjsonify(),
+	)
 }
 
 type UsorList []*Usor
@@ -103,6 +107,13 @@ func (UL *UsorList) rm(usor *Usor) *Usor {
 }
 
 func (UL UsorList) boardcast(msg *Msg) *Msg {
+	if msg == nil {
+		_ulog("@err@ UsorList.boardcast msg == nil")
+		return nil
+	}
+	for _, u := range UL {
+		u.OnBoardcasted(msg)
+	}
 	return msg
 }
 
@@ -137,6 +148,8 @@ func (R *Room) AddUsor(usor *Usor) *Usor {
 	}
 	R.usors.add(usor)
 	usor.OnRoom(R.chist)
+	//boardcast
+	R.usors.boardcast(newMsg("join", [][]string{[]string{usor.name}}))
 	return usor
 }
 

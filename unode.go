@@ -18,18 +18,21 @@ type Usor struct {
 	conn *websocket.Conn //client <--conn--> usor
 }
 
-func (U *Usor) join(room_name string) *Msg {
+func (U *Usor) join(room_name string) error {
 	if U == nil {
 		_ulog("@err@ Usor.join U == nil")
-		return nil
+		return newErrMsg("U == nil")
 	}
 	if U.room != nil {
 		//cannot join
-		return newMsg(nil, nil, nil, nil, "error",
-			[][]string{[]string{"A room-usor can not join in another room."}})
+		return newErrMsg("A room-usor can not join in another room.")
 	}
+	_ulog("@std@ Usor.join Requesting the room: ", room_name)
 	var res_room = U.eden.ReqRoom(room_name)
 	U.room = res_room
+	res_room.AddUsor(U)
+	_ulog("@std@ Usor.join Room={", &U.room, U.room.name, U.room.usors, "}")
+	_ulog("@std@ Usor.join Join Successful.")
 	return nil //good`
 }
 
@@ -38,22 +41,25 @@ func (U *Usor) handleClient() {
 		_ulog("@err@ Usor.handleClient U == nil")
 		return
 	}
-	var strjson string
 	_ulog("@std@ Usor.handleClient")
 	//var msg *Msg
 	for {
 		msgtype, barjson, err := U.conn.ReadMessage()
 		if err != nil {
 			//Gone.
-			_ulog("@err@", "Usor.handleClient", err.Error())
+			_ulog("@err@ Usor.handleClient", err.Error())
 			U.conn.Close()
 			return
 		} else {
 			if msgtype == websocket.TextMessage {
-				strjson = string(barjson)
-				_ulog("@std@", "Usor.handleClient type=", msgtype, strjson)
+				var client_msg = newBarMsg(barjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, string(barjson))
+				if client_msg.Summary == "join" {
+					_ulog("@std Usor.handleClient join")
+					U.join(client_msg.Content[0][0])
+				}
 			} else {
-				_ulog("@std@", "Usor.handleClient type=", msgtype, barjson)
+				_ulog("@std@ Usor.handleClient type=", msgtype, barjson)
 			}
 		}
 	}
@@ -63,9 +69,23 @@ func (U *Usor) Run() {
 	U.handleClient()
 }
 
-func (U *Usor) OnSent(msg *Msg) *Msg {
-	_ulog("@std@ Usor.OnSent Receive A Msg.", msg.summary, msg.content)
-	return msg
+func (U *Usor) OnEden(room_name_list []string) {
+	_ulog("@std@ Usor.OnEden The name-list is:", room_name_list)
+	U.conn.WriteMessage(
+		websocket.TextMessage,
+		newMsg("room-name-list", [][]string{room_name_list}).barjsonify(),
+	)
+}
+
+func (U *Usor) OnRoom(chist [][]string) {
+	_ulog("@std@ Usor.OnRoom The chist=chat-history is:", chist)
+	U.conn.WriteMessage(
+		websocket.TextMessage,
+		newMsg("chist", [][]string(chist)).barjsonify(),
+	)
+}
+
+func (U *Usor) OnBoradcasted(msg *Msg) {
 }
 
 type UsorList []*Usor
@@ -104,18 +124,20 @@ func (R *Room) handleCenter() {
 func (R *Room) handleUsors() {
 }
 
-func (R Room) GetChist(amount int8) [][]string {
-	return [][]string{}
-}
-
 func (R Room) OnKilled() {
 }
 
 func (R Room) OnSaid(usor_name string, dialog string) {
 }
 
-func (R *Room) AddUsor(*Usor) *Usor {
-	return nil
+func (R *Room) AddUsor(usor *Usor) *Usor {
+	if R == nil || usor == nil {
+		_ulog("@err@ Room.AddUsor R||usor == nil")
+		return nil
+	}
+	R.usors.add(usor)
+	usor.OnRoom(R.chist)
+	return usor
 }
 
 func (R *Room) Run() {
@@ -188,14 +210,7 @@ func (E *Eden) AddUsor(usor *Usor) *Usor {
 		return nil
 	}
 	E.guests.add(usor)
-	usor.OnSent(newMsg(
-		usor,
-		E,
-		nil,
-		E.center,
-		"room-name-list",
-		[][]string{E.center.RoomNameList()},
-	))
+	usor.OnEden(E.center.RoomNameList())
 	return usor
 }
 
@@ -226,13 +241,15 @@ func (C *Center) newEden() *Eden {
 //will be called by Eden.ReqRoom
 func (C *Center) NewRoom(name string) *Room {
 	var room = new(Room)
+	_ulog("@std@ Center.newRoom name=", name)
 	room.name = name
 	room.qmsg = new(MsgList)
 	room.chist = [][]string{}
 	room.usors = new(UsorList)
 	room.center = C
 	C.rooms.add(room)
-	_ulog("@dat@", "Center.newRoom", C.rooms)
+	_ulog("@std@ Center.newRoom newRoom={", room.name, room.chist, room.usors, "}")
+	_ulog("@std@", "Center.newRoom rooms=", C.rooms)
 	return room
 }
 

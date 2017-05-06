@@ -24,7 +24,6 @@ function Client () {
 		);
 		this.id = { 'r': undefined, 'u': undefined };
 		this.load_events();
-		this.Join(0, undefined);
 	}
 };
 
@@ -32,7 +31,7 @@ Client.prototype.load_events = function () {
 	this.ws_conn.onopen = function () {
 	};
 	this.ws_conn.onmessage = function (e) {
-		console.log("@res@", e.data);
+		console.log("Usor-->@res@", e.data);
 
 	};
 	this.ws_conn.onclose = function () {
@@ -51,17 +50,22 @@ Client.prototype.send_txt = function (txt) {
 	}
 };
 
+Client.prototype.send_msg = function (summary, content) {
+	var strjson = JSON.stringify({
+		"Summary": summary.toString(),
+		"Content": content
+	});
+	console.log("@std@ Client.send_msg", strjson)
+	this.send_txt(strjson);
+};
+
 Client.prototype.Say = function (txt) {
-	this.send_txt(txt)
+	this.send_msg("say", [[txt.toString()]])
 };
 
 Client.prototype.Join = function (room_name) {
-	//TODO
 	//If room_id == undefined, then it's a new room request.
-	this.send_txt(JSON.stringify({
-		"summary": "join",
-		"content": [[room_name.toString()]]
-	}));
+	this.send_msg("join", [[room_name.toString()]]);
 };
 
 Client.prototype.Gone = function () {

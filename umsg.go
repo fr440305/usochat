@@ -4,47 +4,59 @@
 package main
 
 //import "html"
-//import "encoding/json"
+import "encoding/json"
 
 const SET_DESCRIPTION byte = 1
 const SET_CONTENT byte = 2
 
 //The instance of Msg can only be constructed by Usor.
 type Msg struct {
-	usor    *Usor
-	eden    *Eden
-	room    *Room
-	center  *Center
-	summary string
-	content [][]string
+	Summary string
+	Content [][]string
 }
 
-func newMsg(usor *Usor, eden *Eden, room *Room, center *Center, summary string, content [][]string) *Msg {
+func newMsg(summary string, content [][]string) *Msg {
 	return &Msg{
-		usor:    usor,
-		eden:    eden,
-		room:    room,
-		center:  center,
-		summary: summary,
-		content: content,
+		Summary: summary,
+		Content: content,
 	}
+}
+
+func newBarMsg(barjson []byte) *Msg {
+	var resmsg = new(Msg)
+	//...
+	err := json.Unmarshal(barjson, resmsg)
+	if err != nil {
+		_ulog("@err@ Msg.newBarJson", err.Error())
+		return nil
+	}
+	return resmsg
+}
+
+func newErrMsg(errinfo string) *Msg {
+	return newMsg("error", [][]string{[]string{errinfo}})
 }
 
 func (M *Msg) clone() *Msg {
 	return nil
 }
 
-func (M *Msg) parse(json_raw string) error {
-	return nil
+func (M *Msg) barjsonify() []byte {
+	res, err := json.Marshal(M)
+	if err != nil {
+		_ulog("@err@ Msg.barjsonify", err.Error())
+		return []byte{}
+	}
+	return res
 }
 
-func (M *Msg) jsonify() string {
+func (M *Msg) strjsonify() string {
 	return ""
 }
 
 func (M Msg) Error() string {
-	if M.summary == "error" {
-		return M.content[0][0]
+	if M.Summary == "error" {
+		return M.Content[0][0]
 	} else {
 		return "" //not an error
 	}

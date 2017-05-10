@@ -8,6 +8,14 @@ func _ulogSet(iflog bool) {
 	if_log = iflog
 }
 
+func _ustd(G ...interface{}) {
+	_ulog("@std@", G...)
+}
+
+func _uerr(G ...interface{}) {
+	_ulog("@err@", G...)
+}
+
 func _ulog(G ...interface{}) {
 	if if_log == true {
 		fmt.Println(G...)

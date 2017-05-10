@@ -9,11 +9,13 @@ func _ulogSet(iflog bool) {
 }
 
 func _ustd(G ...interface{}) {
-	_ulog("@std@", G...)
+	_ulog("@std@")
+	_ulog(G...)
 }
 
 func _uerr(G ...interface{}) {
-	_ulog("@err@", G...)
+	_ulog("@err@")
+	_ulog(G...)
 }
 
 func _ulog(G ...interface{}) {

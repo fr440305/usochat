@@ -15,21 +15,9 @@ func _ulog(G ...interface{}) {
 }
 
 func _usor(usor *Usor) {
-	if usor == nil {
-		return
-	}
-	var pub_usor = struct {
-		Nid      uint64
-		R        *Room
-		MsgQueue chan *Msg
-	}{usor.nid, usor.room, usor.msg_queue}
-	fmt.Println(pub_usor)
 }
 
 func _usorArr(usor_arr []*Usor) {
-	for _, each_usor := range usor_arr {
-		_usor(each_usor)
-	}
 }
 
 func _uroom(room *Room) {

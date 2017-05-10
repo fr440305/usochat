@@ -14,11 +14,17 @@ printHelp () {
 	echo "USO is a simple chatting website, and this file,";
 	echo "uso.sh, is the booter of this website's server.";
 	echo "";
+	echo "If you wanna run it right now, type \`uso.sh start\`.";
+	echo "";
 	echo "Usage:";
 	echo "        bash uso.sh <command> <flags>";
 	echo "";
-	echo "If you wanna run it, type \`uso.sh start\`.";
-	echo "";
+	echo "The commands are:";
+	echo "        doc         Show the details of design of this project, etc";
+	echo "        help        Show help contents";
+	echo "        start       Run the server";
+	echo "        src         Show the structure of this project, etc";
+	echo "        showlog     See log files";
 };
 
 build () {

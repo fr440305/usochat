@@ -14,7 +14,7 @@ printHelp () {
 	echo "USO is a simple chatting website, and this file,";
 	echo "uso.sh, is the booter of this website's server.";
 	echo "";
-	echo "If you wanna run it right now, type \`uso.sh start\`.";
+	echo "If you wanna run it right now, type \`bash uso.sh start\`.";
 	echo "";
 	echo "Usage:";
 	echo "        bash uso.sh <command> <flags>";

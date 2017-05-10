@@ -30,7 +30,7 @@ func (U *Usor) join(room_name string) error {
 	U.room = U.eden.ReqRoom(room_name)
 	U.room.AddUsor(U)
 	U.eden.RmUsor(U)
-	_ulog("@std@ Usor.join Room={", U.room, U.room.name, U.room.usors, "}")
+	_ulog("@std@ Usor.join {room, room_name, usors}={", U.room, U.room.name, U.room.usors, "}")
 	_ulog("@std@ Usor.join Join Successful.")
 	return nil
 }
@@ -48,12 +48,21 @@ func (U *Usor) exitroom(if_rm_room string) error {
 	}
 	U.room.RmUsor(U)
 	if if_rm_room == "rm" {
-		err = U.room.OnKilled()
+		err = U.room.SelfKill()
 	}
 	U.room = nil
 	U.eden.AddUsor(U)
 	_ulog("@std@ Usor.exitroom exit successful.")
 	return err
+}
+
+func (U *Usor) setname(name string) error {
+	if U == nil {
+		return newErrMsg("U == nil")
+	}
+	U.name = name
+	U.writeMsg(newMsg("setnameok", [][]string{[]string{name}}))
+	return nil
 }
 
 func (U *Usor) say(dialog string) error {
@@ -66,7 +75,7 @@ func (U *Usor) say(dialog string) error {
 	if dialog == "" {
 		return newErrMsg("dialog cannot be empty")
 	}
-	U.room.OnSaid(U.name, dialog)
+	U.room.AddDialog(U.name, dialog)
 	return nil
 }
 
@@ -109,6 +118,8 @@ func (U *Usor) handleClient() {
 		case "gone":
 			err = U.exitroom("rsv")
 			return //the only return of client-handler.
+		case "setname":
+			err = U.setname(client_msg.Content[0][0])
 		case "join":
 			err = U.join(client_msg.Content[0][0])
 		case "exitroom":
@@ -195,27 +206,21 @@ type Room struct {
 	center *Center
 }
 
-func (R *Room) handleCenter() {
-}
-
-func (R *Room) handleUsors() {
-}
-
-func (R *Room) OnKilled() error {
+func (R *Room) SelfKill() error {
 	if R == nil {
-		return newErrMsg("Room.OnKilled R == nil")
+		return newErrMsg("Room.SelfKill R == nil")
 	}
 	if len(*(R.usors)) == 0 {
 		R.center.RmRoom(R)
 		return nil
 	} else {
-		return newErrMsg("Room.OnKilled It still has usor(s) in this room.")
+		return newErrMsg("Room.SelfKill It still has usor(s) in this room.")
 	}
 }
 
-func (R *Room) OnSaid(usor_name string, dialog string) {
+func (R *Room) AddDialog(usor_name string, dialog string) {
 	if R == nil {
-		_ulog("@err@ Room.OnSaid R == nil")
+		_ulog("@err@ Room.AddDialog R == nil")
 	}
 	R.chist = append(R.chist, []string{usor_name, dialog})
 	R.usors.boardcast(newMsg("dialog", [][]string{[]string{usor_name, dialog}}))
@@ -238,12 +243,9 @@ func (R *Room) RmUsor(usor *Usor) *Usor {
 		_ulog("@err@ Room.AddUsor R||usor == nil")
 		return nil
 	}
-	R.usors.boardcast(newMsg("exitroom", [][]string{[]string{usor.name}}))
+	R.usors.boardcast(newMsg("usorgone", [][]string{[]string{usor.name}}))
 	R.usors.rm(usor)
 	return usor
-}
-
-func (R *Room) Run() {
 }
 
 type RoomList []*Room
@@ -317,7 +319,7 @@ type Eden struct {
 }
 
 func (E Eden) ReqRoom(room_name string) *Room {
-	var res_room = E.center.rooms.lookup(room_name)
+	var res_room = E.center.LookupRoom(room_name)
 	if res_room != nil {
 		return res_room
 	} else {
@@ -373,7 +375,14 @@ func (C *Center) newEden() *Eden {
 	return eden
 }
 
-//will be called by Eden.ReqRoom
+func (C *Center) LookupRoom(name string) *Room {
+	if C == nil {
+		_uerr("Center.LookupRoom C == nil")
+		return nil
+	}
+	return C.rooms.lookup(name)
+}
+
 func (C *Center) NewRoom(name string) *Room {
 	var room = new(Room)
 	_ulog("@std@ Center.newRoom name=", name)
@@ -414,13 +423,8 @@ func (C *Center) RoomNameList() []string {
 	return C.rooms.list()
 }
 
-func (C *Center) handleRooms() error {
-	//including eden.
-	return nil
-}
-
 func (C *Center) Run() {
-	http.Handle("/", http.FileServer(http.Dir("frontend")))
+	http.Handle("/", http.FileServer(http.Dir("frontend"))) //TODO set http-header:no-cache.
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ulog("@std@", "Center.run()", "/ws")
 		C.eden.AddUsor(C.newUsor(w, r))

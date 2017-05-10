@@ -68,7 +68,9 @@ Client.prototype.Join = function (room_name) {
 	this.send_msg("join", [[room_name.toString()]]);
 };
 
-Client.prototype.Gone = function () {
+Client.prototype.Exitroom = function (if_rm_room) {
+	//if_rm_room == {"rm"||"rsv"}
+	this.send_msg("exitroom", [[if_rm_room]]);
 };
 
 Client.prototype.Doodle = function (base_64) {

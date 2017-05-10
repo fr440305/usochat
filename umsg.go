@@ -50,10 +50,6 @@ func (M *Msg) barjsonify() []byte {
 	return res
 }
 
-func (M *Msg) strjsonify() string {
-	return ""
-}
-
 func (M Msg) Error() string {
 	if M.Summary == "error" {
 		return M.Content[0][0]

@@ -20,7 +20,6 @@ type Usor struct {
 
 func (U *Usor) join(room_name string) error {
 	if U == nil {
-		_ulog("@err@ Usor.join U == nil")
 		return newErrMsg("U == nil")
 	}
 	if U.room != nil {
@@ -28,12 +27,39 @@ func (U *Usor) join(room_name string) error {
 		return newErrMsg("A room-usor can not join in another room.")
 	}
 	_ulog("@std@ Usor.join Requesting the room: ", room_name)
-	var res_room = U.eden.ReqRoom(room_name)
-	U.room = res_room
-	res_room.AddUsor(U)
-	_ulog("@std@ Usor.join Room={", &U.room, U.room.name, U.room.usors, "}")
+	U.room = U.eden.ReqRoom(room_name)
+	U.room.AddUsor(U)
+	U.eden.RmUsor(U)
+	_ulog("@std@ Usor.join Room={", U.room, U.room.name, U.room.usors, "}")
 	_ulog("@std@ Usor.join Join Successful.")
 	return nil //good`
+}
+
+func (U *Usor) exitroom(if_rm_room string) error {
+	if U == nil {
+		return newErrMsg("Usor.exitroom - U == nil.")
+	}
+	if if_rm_room != "rm" && if_rm_room != "rsv" {
+		return newErrMsg("Usor.exitroom - parametric != {rm, rsv}")
+	}
+	if U.room == nil {
+		return newErrMsg("A eden-usor cannot exit room because it was already exited.")
+	}
+	U.room.RmUsor(U)
+	U.room = nil
+	U.eden.AddUsor(U)
+	return nil
+}
+
+func (U *Usor) say(dialog string) error {
+	if U == nil {
+		return newErrMsg("U == nil")
+	}
+	if dialog == "" {
+		return newErrMsg("dialog cannot be empty")
+	}
+	U.room.OnSaid(U.name, dialog)
+	return nil
 }
 
 func (U *Usor) handleClient() {
@@ -44,28 +70,32 @@ func (U *Usor) handleClient() {
 	_ulog("@std@ Usor.handleClient")
 	//var msg *Msg
 	for {
-		msgtype, barjson, err := U.conn.ReadMessage()
+		_, barjson, err := U.conn.ReadMessage()
 		if err != nil {
 			//Gone.
 			_ulog("@err@ Usor.handleClient", err.Error())
 			U.conn.Close()
+			U.exitroom("rsv")
 			return
 		} else {
-			if msgtype == websocket.TextMessage {
-				var client_msg = newBarMsg(barjson)
-				_ulog("@std@ Usor.handleClient type=", msgtype, string(barjson))
-				if client_msg.Summary == "join" {
-					_ulog("@std Usor.handleClient join")
-					U.join(client_msg.Content[0][0])
-				}
-			} else {
-				_ulog("@std@ Usor.handleClient type=", msgtype, barjson)
+			var client_msg = newBarMsg(barjson)
+			_ulog("@std Usor.handleClient", client_msg.Summary)
+			switch client_msg.Summary {
+			case "join":
+				err = U.join(client_msg.Content[0][0])
+			case "exitroom":
+				err = U.exitroom(client_msg.Content[0][0])
+			case "say":
+				err = U.say(client_msg.Content[0][0])
+			}
+			if err != nil {
+				_ulog("@err@ Usor.handleClient", err.Error())
 			}
 		}
 	}
 }
 
-func (U *Usor) Run() {
+func (U *Usor) OnRun() {
 	U.handleClient()
 }
 
@@ -103,6 +133,13 @@ func (UL *UsorList) add(usor *Usor) *Usor {
 }
 
 func (UL *UsorList) rm(usor *Usor) *Usor {
+	for i, u := range *UL {
+		if usor == u {
+			*UL = append((*UL)[:i], (*UL)[i+1:]...) //rm
+			return usor
+		}
+	}
+	// no this usor
 	return nil
 }
 
@@ -115,6 +152,14 @@ func (UL UsorList) boardcast(msg *Msg) *Msg {
 		u.OnBoardcasted(msg)
 	}
 	return msg
+}
+
+func (UL UsorList) list() []string {
+	var res = []string{}
+	for _, usor := range UL {
+		res = append(res, usor.name)
+	}
+	return res
 }
 
 func (UL UsorList) usorAmount() int64 {
@@ -135,10 +180,13 @@ func (R *Room) handleCenter() {
 func (R *Room) handleUsors() {
 }
 
-func (R Room) OnKilled() {
+func (R *Room) OnKilled() {
+	//R.center.rooms.rm(R)
 }
 
-func (R Room) OnSaid(usor_name string, dialog string) {
+func (R *Room) OnSaid(usor_name string, dialog string) {
+	R.chist = append(R.chist, []string{usor_name, dialog})
+	R.usors.boardcast(newMsg("dialog", [][]string{[]string{usor_name, dialog}}))
 }
 
 func (R *Room) AddUsor(usor *Usor) *Usor {
@@ -149,7 +197,17 @@ func (R *Room) AddUsor(usor *Usor) *Usor {
 	R.usors.add(usor)
 	usor.OnRoom(R.chist)
 	//boardcast
-	R.usors.boardcast(newMsg("join", [][]string{[]string{usor.name}}))
+	R.usors.boardcast(newMsg("join", [][]string{R.usors.list()}))
+	return usor
+}
+
+func (R *Room) RmUsor(usor *Usor) *Usor {
+	if R == nil || usor == nil {
+		_ulog("@err@ Room.AddUsor R||usor == nil")
+		return nil
+	}
+	R.usors.boardcast(newMsg("exitroom", [][]string{[]string{usor.name}}))
+	R.usors.rm(usor)
 	return usor
 }
 
@@ -213,7 +271,7 @@ func (E Eden) ReqRoom(room_name string) *Room {
 	if res_room != nil {
 		return res_room
 	} else {
-		E.guests.boardcast(newMsg("newroon", [][]string{[]string{room_name}}))
+		E.guests.boardcast(newMsg("newroom", [][]string{[]string{room_name}}))
 		return E.center.NewRoom(room_name)
 	}
 }
@@ -225,6 +283,15 @@ func (E *Eden) AddUsor(usor *Usor) *Usor {
 	}
 	E.guests.add(usor)
 	usor.OnEden(E.center.RoomNameList())
+	return usor
+}
+
+func (E *Eden) RmUsor(usor *Usor) *Usor {
+	if E == nil || usor == nil {
+		_ulog("@err@ Eden.RmUsor E||usor == nil pointer.")
+		return nil
+	}
+	E.guests.rm(usor)
 	return usor
 }
 
@@ -280,7 +347,7 @@ func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 		return nil
 	}
 	//C.eden.add this usor.
-	go usor.Run()
+	go usor.OnRun()
 	return usor
 }
 

@@ -32,7 +32,7 @@ func (U *Usor) join(room_name string) error {
 	U.eden.RmUsor(U)
 	_ulog("@std@ Usor.join Room={", U.room, U.room.name, U.room.usors, "}")
 	_ulog("@std@ Usor.join Join Successful.")
-	return nil //good`
+	return nil
 }
 
 func (U *Usor) exitroom(if_rm_room string) error {
@@ -52,6 +52,7 @@ func (U *Usor) exitroom(if_rm_room string) error {
 	}
 	U.room = nil
 	U.eden.AddUsor(U)
+	_ulog("@std@ Usor.exitroom exit successful.")
 	return err
 }
 
@@ -70,6 +71,7 @@ func (U *Usor) say(dialog string) error {
 }
 
 func (U *Usor) readMsg() *Msg {
+	var msg *Msg
 	_, barjson, err := U.conn.ReadMessage()
 	if err != nil {
 		//going-away
@@ -77,13 +79,18 @@ func (U *Usor) readMsg() *Msg {
 		return newMsg("gone", [][]string{[]string{}})
 	} else {
 		//here may appears error
-		return newBarMsg(barjson)
+		msg = newBarMsg(barjson)
+		if msg == nil {
+			return newErrMsg("unexpected input json from client.")
+		}
 	}
+	return msg
+
 }
 
 func (U *Usor) writeMsg(msg *Msg) error {
-	U.conn.WriteMessage(websocket.TextMessage, msg.barjsonify())
-	return nil //TODO
+	var err = U.conn.WriteMessage(websocket.TextMessage, msg.barjsonify())
+	return err
 }
 
 func (U *Usor) handleClient() {

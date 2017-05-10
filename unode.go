@@ -36,6 +36,7 @@ func (U *Usor) join(room_name string) error {
 }
 
 func (U *Usor) exitroom(if_rm_room string) error {
+	var err error
 	if U == nil {
 		return newErrMsg("Usor.exitroom - U == nil.")
 	}
@@ -46,9 +47,12 @@ func (U *Usor) exitroom(if_rm_room string) error {
 		return newErrMsg("A eden-usor cannot exit room because it was already exited.")
 	}
 	U.room.RmUsor(U)
+	if if_rm_room == "rm" {
+		err = U.room.OnKilled()
+	}
 	U.room = nil
 	U.eden.AddUsor(U)
-	return nil
+	return err
 }
 
 func (U *Usor) say(dialog string) error {
@@ -93,16 +97,19 @@ func (U *Usor) handleClient() {
 	//var msg *Msg
 	for {
 		client_msg = U.readMsg()
-		_ulog("\n@std Usor.handleClient", client_msg.Summary)
+		_ulog("\n@std@ Usor.handleClient", client_msg.Summary)
 		switch client_msg.Summary {
 		case "gone":
 			err = U.exitroom("rsv")
+			return //the only return of client-handler.
 		case "join":
 			err = U.join(client_msg.Content[0][0])
 		case "exitroom":
 			err = U.exitroom(client_msg.Content[0][0])
 		case "say":
 			err = U.say(client_msg.Content[0][0])
+		default:
+			err = newErrMsg("invalid client message.")
 		}
 		if err != nil {
 			_ulog("@err@ Usor.handleClient", err.Error())
@@ -187,8 +194,16 @@ func (R *Room) handleCenter() {
 func (R *Room) handleUsors() {
 }
 
-func (R *Room) OnKilled() {
-	//R.center.rooms.rm(R)
+func (R *Room) OnKilled() error {
+	if R == nil {
+		return newErrMsg("Room.OnKilled R == nil")
+	}
+	if len(*(R.usors)) == 0 {
+		R.center.RmRoom(R)
+		return nil
+	} else {
+		return newErrMsg("Room.OnKilled It still has usor(s) in this room.")
+	}
 }
 
 func (R *Room) OnSaid(usor_name string, dialog string) {
@@ -236,11 +251,29 @@ func (RL *RoomList) add(room *Room) *Room {
 }
 
 func (RL *RoomList) rm(room *Room) *Room {
+	if RL == nil || room == nil {
+		_ulog("@err@ RoomList.rm RL||room == nil")
+		return nil
+	}
+	for i, r := range *RL {
+		if r == room {
+			*RL = append((*RL)[:i], (*RL)[i+1:]...)
+			return r
+		}
+	}
+	//no this room
 	return nil
 }
 
 func (RL RoomList) boardcast(msg *Msg) *Msg {
-	return nil
+	if msg == nil {
+		_ulog("@err@ RoomList.boardcast msg == nil")
+		return nil
+	}
+	for _, r := range RL {
+		r.usors.boardcast(msg)
+	}
+	return msg
 }
 
 func (RL RoomList) lookup(room_name string) *Room {
@@ -305,6 +338,10 @@ func (E *Eden) RmUsor(usor *Usor) *Usor {
 	return usor
 }
 
+func (E Eden) OnRmRoom(room_list []string) {
+	E.guests.boardcast(newMsg("rmroom", [][]string{room_list}))
+}
+
 //The main server
 type Center struct {
 	eden        *Eden
@@ -342,6 +379,11 @@ func (C *Center) NewRoom(name string) *Room {
 	_ulog("@std@ Center.newRoom newRoom={", room.name, room.chist, room.usors, "}")
 	_ulog("@std@", "Center.newRoom rooms=", C.rooms)
 	return room
+}
+
+func (C *Center) RmRoom(room *Room) {
+	C.rooms.rm(room)
+	C.eden.OnRmRoom(C.rooms.list())
 }
 
 //will be called iff a new client opened.

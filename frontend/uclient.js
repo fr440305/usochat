@@ -13,7 +13,8 @@ function Msg (source, summary, content) {
 Msg.prototype.Stringify = function () {
 };
 
-function Client () {
+function Client (name) {
+	this.usor_name = name;
 	this.signal = {};
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
@@ -22,19 +23,40 @@ function Client () {
 		this.ws_conn = new WebSocket(
 			"ws://" + document.location.host + "/ws"
 		);
-		this.id = { 'r': undefined, 'u': undefined };
 		this.load_events();
 	}
 };
 
 Client.prototype.load_events = function () {
+	var client = this;
 	this.ws_conn.onopen = function () {
+		client.send_msg("setname", [[client.usor_name]])
 	};
 	this.ws_conn.onmessage = function (e) {
-		console.log("Usor-->@res@", e.data);
-
+		//console.log("Usor-->@res@", e.data);
+		/*
+		msg = JSON.parse(e.data)
+		switch(msg["Summary"]) {
+		case "setnameok": 
+			console.log("Your name was already been:", msg["Content"][0][0])
+			break;
+		case "room-name-list":
+			console.log("Rooms are: ", msg["Content"][0])
+			break;
+		case "error":
+			console.log("@err@", msg['Content'][0][0])
+			break;
+		case "chist":
+		case "dialog":
+		case "join":
+		case "usorgone":
+		case "newroom":
+		case "rmroom":
+		*/
+		console.log(e.data);
 	};
 	this.ws_conn.onclose = function () {
+		console.log("Usor-->@err@ Websocket Server Closed.")
 	};
 	this.ws_conn.onerror = function (e) {
 		console.log("@err@", e.data);

@@ -61,7 +61,7 @@ func (U *Usor) setname(name string) error {
 		return newErrMsg("U == nil")
 	}
 	U.name = name
-	U.writeMsg(newMsg("setnameok", [][]string{[]string{name}}))
+	U.writeMsg(newMsg("~~name", [][]string{[]string{name}}))
 	return nil
 }
 
@@ -126,8 +126,8 @@ func (U *Usor) handleClient() {
 			err = U.exitroom(client_msg.Content[0][0])
 		case "say":
 			err = U.say(client_msg.Content[0][0])
-		default:
-			err = newErrMsg("invalid client message.")
+		case "error":
+			err = client_msg
 		}
 		if err != nil {
 			_ulog("@err@ Usor.handleClient", err.Error())
@@ -142,12 +142,14 @@ func (U *Usor) OnRun() {
 
 func (U *Usor) OnEden(room_name_list []string) {
 	_ulog("@std@ Usor.OnEden The name-list is:", room_name_list)
-	U.writeMsg(newMsg("room-name-list", [][]string{room_name_list}))
+	U.writeMsg(newMsg("->eden", [][]string{room_name_list}))
 }
 
-func (U *Usor) OnRoom(chist [][]string) {
+func (U *Usor) OnRoom(room_name string, chist [][]string) {
 	_ulog("@std@ Usor.OnRoom The chist=chat-history is:", chist)
-	U.writeMsg(newMsg("chist", [][]string(chist)))
+	var msg_cnt = [][]string{[]string{room_name}}
+	msg_cnt = append(msg_cnt, chist...)
+	U.writeMsg(newMsg("->room", msg_cnt))
 }
 
 func (U *Usor) OnBoardcasted(msg *Msg) {
@@ -223,7 +225,7 @@ func (R *Room) AddDialog(usor_name string, dialog string) {
 		_ulog("@err@ Room.AddDialog R == nil")
 	}
 	R.chist = append(R.chist, []string{usor_name, dialog})
-	R.usors.boardcast(newMsg("dialog", [][]string{[]string{usor_name, dialog}}))
+	R.usors.boardcast(newMsg("++dialog", [][]string{[]string{usor_name, dialog}}))
 }
 
 func (R *Room) AddUsor(usor *Usor) *Usor {
@@ -232,9 +234,9 @@ func (R *Room) AddUsor(usor *Usor) *Usor {
 		return nil
 	}
 	R.usors.add(usor)
-	usor.OnRoom(R.chist)
+	usor.OnRoom(R.name, R.chist)
 	//boardcast
-	R.usors.boardcast(newMsg("join", [][]string{R.usors.list()}))
+	R.usors.boardcast(newMsg("~~usor", [][]string{R.usors.list()}))
 	return usor
 }
 
@@ -243,7 +245,7 @@ func (R *Room) RmUsor(usor *Usor) *Usor {
 		_ulog("@err@ Room.AddUsor R||usor == nil")
 		return nil
 	}
-	R.usors.boardcast(newMsg("usorgone", [][]string{[]string{usor.name}}))
+	R.usors.boardcast(newMsg("~~usor", [][]string{[]string{usor.name}}))
 	R.usors.rm(usor)
 	return usor
 }
@@ -323,7 +325,7 @@ func (E Eden) ReqRoom(room_name string) *Room {
 	if res_room != nil {
 		return res_room
 	} else {
-		E.guests.boardcast(newMsg("newroom", [][]string{[]string{room_name}}))
+		E.guests.boardcast(newMsg("++room", [][]string{[]string{room_name}}))
 		return E.center.NewRoom(room_name)
 	}
 }
@@ -348,7 +350,7 @@ func (E *Eden) RmUsor(usor *Usor) *Usor {
 }
 
 func (E Eden) OnRmRoom(room_list []string) {
-	E.guests.boardcast(newMsg("rmroom", [][]string{room_list}))
+	E.guests.boardcast(newMsg("--room", [][]string{room_list}))
 }
 
 //The main server
@@ -377,7 +379,7 @@ func (C *Center) newEden() *Eden {
 
 func (C *Center) LookupRoom(name string) *Room {
 	if C == nil {
-		_uerr("Center.LookupRoom C == nil")
+		_ulog("@err@ Center.LookupRoom C == nil")
 		return nil
 	}
 	return C.rooms.lookup(name)

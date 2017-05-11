@@ -4,18 +4,8 @@
  *
  */
 
-function Msg (source, summary, content) {
-	this.source = source;
-	this.summary = summary; //string.
-	this.content = content; //[][]string.
-};
-
-Msg.prototype.Stringify = function () {
-};
-
 function Client (name) {
 	this.usor_name = name;
-	this.signal = {};
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
 		console.log("@err@ Browser does not support websocket.");
@@ -30,29 +20,11 @@ function Client (name) {
 Client.prototype.load_events = function () {
 	var client = this;
 	this.ws_conn.onopen = function () {
-		client.send_msg("setname", [[client.usor_name]])
+		client.SetName(client.usor_name)
 	};
 	this.ws_conn.onmessage = function (e) {
 		//console.log("Usor-->@res@", e.data);
-		/*
-		msg = JSON.parse(e.data)
-		switch(msg["Summary"]) {
-		case "setnameok": 
-			console.log("Your name was already been:", msg["Content"][0][0])
-			break;
-		case "room-name-list":
-			console.log("Rooms are: ", msg["Content"][0])
-			break;
-		case "error":
-			console.log("@err@", msg['Content'][0][0])
-			break;
-		case "chist":
-		case "dialog":
-		case "join":
-		case "usorgone":
-		case "newroom":
-		case "rmroom":
-		*/
+		msg = JSON.parse(e.data);
 		console.log(e.data);
 	};
 	this.ws_conn.onclose = function () {
@@ -81,6 +53,10 @@ Client.prototype.send_msg = function (summary, content) {
 	this.send_txt(strjson);
 };
 
+Client.prototype.SetName = function (usor_name) {
+	this.send_msg("setname", [[usor_name]]);
+};
+
 Client.prototype.Say = function (txt) {
 	this.send_msg("say", [[txt.toString()]])
 };
@@ -94,8 +70,3 @@ Client.prototype.Exitroom = function (if_rm_room) {
 	//if_rm_room == {"rm"||"rsv"}
 	this.send_msg("exitroom", [[if_rm_room]]);
 };
-
-Client.prototype.Doodle = function (base_64) {
-};
-
-

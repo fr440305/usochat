@@ -2,26 +2,8 @@ package main
 
 import "fmt"
 
-var if_log bool = true
-
-func _ulogSet(iflog bool) {
-	if_log = iflog
-}
-
-func _ustd(G ...interface{}) {
-	_ulog("@std@")
-	_ulog(G...)
-}
-
-func _uerr(G ...interface{}) {
-	_ulog("@err@")
-	_ulog(G...)
-}
-
 func _ulog(G ...interface{}) {
-	if if_log == true {
-		fmt.Println(G...)
-	}
+	fmt.Println(G...)
 }
 
 func _usor(usor *Usor) {

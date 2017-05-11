@@ -37,10 +37,6 @@ func newErrMsg(errinfo string) *Msg {
 	return newMsg("error", [][]string{[]string{errinfo}})
 }
 
-func (M *Msg) clone() *Msg {
-	return nil
-}
-
 func (M *Msg) barjsonify() []byte {
 	res, err := json.Marshal(M)
 	if err != nil {

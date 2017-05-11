@@ -142,14 +142,14 @@ func (U *Usor) OnRun() {
 
 func (U *Usor) OnEden(room_name_list []string) {
 	_ulog("@std@ Usor.OnEden The name-list is:", room_name_list)
-	U.writeMsg(newMsg("->eden", [][]string{room_name_list}))
+	U.writeMsg(newMsg("-)eden", [][]string{room_name_list}))
 }
 
 func (U *Usor) OnRoom(room_name string, chist [][]string) {
 	_ulog("@std@ Usor.OnRoom The chist=chat-history is:", chist)
 	var msg_cnt = [][]string{[]string{room_name}}
 	msg_cnt = append(msg_cnt, chist...)
-	U.writeMsg(newMsg("->room", msg_cnt))
+	U.writeMsg(newMsg("-)room", msg_cnt))
 }
 
 func (U *Usor) OnBoardcasted(msg *Msg) {
@@ -236,7 +236,7 @@ func (R *Room) AddUsor(usor *Usor) *Usor {
 	R.usors.add(usor)
 	usor.OnRoom(R.name, R.chist)
 	//boardcast
-	R.usors.boardcast(newMsg("~~usor", [][]string{R.usors.list()}))
+	R.usors.boardcast(newMsg("++usor", [][]string{[]string{usor.name}, R.usors.list()}))
 	return usor
 }
 
@@ -245,8 +245,8 @@ func (R *Room) RmUsor(usor *Usor) *Usor {
 		_ulog("@err@ Room.AddUsor R||usor == nil")
 		return nil
 	}
-	R.usors.boardcast(newMsg("~~usor", [][]string{[]string{usor.name}}))
 	R.usors.rm(usor)
+	R.usors.boardcast(newMsg("--usor", [][]string{[]string{usor.name}, R.usors.list()}))
 	return usor
 }
 

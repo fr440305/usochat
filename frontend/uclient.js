@@ -6,6 +6,38 @@
 
 function Client (name) {
 	this.usor_name = name;
+	this.evtlist = { //TODO
+		'-)eden':function(){
+			console.log("IN EDEN");
+		},
+		'++room':function(){
+			console.log("ADD ROOM");
+		},
+		'--room':function(){
+			console.log("RM ROOM");
+		},
+		'-)room':function(){
+			console.log("IN ROOM");
+		},
+		'++usor':function(){
+			console.log("ADD USOR");
+		},
+		'--usor':function(usor, ulist){
+			console.log("GONE USOR");
+		},
+		'++dialog':function(usor, dialog){
+			console.log("ADD DIALOG");
+		},
+		'~~usor':function(ori_name, new_name, ulist){
+			console.log("USOR NAME CHANGE");
+		},
+		'~~name':function(){
+			console.log("SELF NAME CHANGE");
+		},
+		'error':function(hint){
+			console.log("ERROR");
+		}
+	}
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
 		console.log("@err@ Browser does not support websocket.");
@@ -25,6 +57,7 @@ Client.prototype.load_events = function () {
 	this.ws_conn.onmessage = function (e) {
 		//console.log("Usor-->@res@", e.data);
 		msg = JSON.parse(e.data);
+		client.evtlist[msg.Summary]();
 		console.log(e.data);
 	};
 	this.ws_conn.onclose = function () {

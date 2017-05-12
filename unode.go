@@ -26,6 +26,9 @@ func (U *Usor) join(room_name string) error {
 		//cannot join
 		return newErrMsg("A room-usor can not join in another room.")
 	}
+	if room_name == "" {
+		return newErrMsg("room name cannot be empty.")
+	}
 	_ulog("@std@ Usor.join Requesting the room: ", room_name)
 	U.room = U.eden.ReqRoom(room_name)
 	U.room.AddUsor(U)

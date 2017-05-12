@@ -6,36 +6,36 @@
 
 function Client (name) {
 	this.usor_name = name;
-	this.evtlist = { //TODO
-		'-)eden':function(){
-			console.log("IN EDEN");
+	this.evtlist = {
+		'-)eden':function(rlist){
+			console.log("IN EDEN", rlist);
 		},
-		'++room':function(){
-			console.log("ADD ROOM");
+		'++room':function(new_room_name){
+			console.log("ADD ROOM", new_room_name);
 		},
-		'--room':function(){
-			console.log("RM ROOM");
+		'--room':function(rlist){
+			console.log("RM ROOM", rlist);
 		},
-		'-)room':function(){
-			console.log("IN ROOM");
+		'-)room':function(room_name, chist){
+			console.log("IN ROOM", room_name, chist);
 		},
-		'++usor':function(){
-			console.log("ADD USOR");
+		'++usor':function(usor, ulist){
+			console.log("ADD USOR", usor, ulist);
 		},
 		'--usor':function(usor, ulist){
-			console.log("GONE USOR");
+			console.log("GONE USOR", usor, ulist);
 		},
 		'++dialog':function(usor, dialog){
-			console.log("ADD DIALOG");
+			console.log("ADD DIALOG", usor, dialog);
 		},
 		'~~usor':function(ori_name, new_name, ulist){
-			console.log("USOR NAME CHANGE");
+			console.log("USOR NAME CHANGE", ori_name, new_name, ulist);
 		},
-		'~~name':function(){
-			console.log("SELF NAME CHANGE");
+		'~~name':function(new_name){
+			console.log("SELF NAME CHANGE", new_name);
 		},
 		'error':function(hint){
-			console.log("ERROR");
+			console.log("ERROR", hint);
 		}
 	}
 	if (window.WebSocket === undefined) {
@@ -57,7 +57,54 @@ Client.prototype.load_events = function () {
 	this.ws_conn.onmessage = function (e) {
 		//console.log("Usor-->@res@", e.data);
 		msg = JSON.parse(e.data);
-		client.evtlist[msg.Summary]();
+		switch (msg.Summary) {
+		case '~~name':
+			var name = msg.Content[0][0];
+			client.evtlist['~~name'](name);
+			break;
+		case 'error':
+			var hint = msg.Content[0][0];
+			client.evtlist['error'](hint);
+			break;
+		case '-)eden':
+			var rlist = msg.Content[0];
+			client.evtlist['-)eden'](rlist);
+			break;
+		case '++room':
+			var new_room = msg.Content[0][0];
+			client.evtlist['++room'](new_room);
+			break;
+		case '--room':
+			var rlist = msg.Content[0];
+			client.evtlist['--room'](rlist);
+			break;
+		case '-)room':
+			var rname = msg.Content[0][0];
+			msg.Content.shift();
+			client.evtlist['-)room'](rname, msg.Content);
+			break;
+		case '++usor':
+			var new_usor = msg.Content[0][0];
+			var ulist = msg.Content[1];
+			client.evtlist['++usor'](new_usor, ulist);
+			break;
+		case '--usor':
+			var gone_usor = msg.Content[0][0];
+			var ulist = msg.Content[1];
+			client.evtlist['--usor'](gone_usor, ulist);
+			break;
+		case '~~usor':
+			var ori_usor = msg.Content[0][0];
+			var now_usor = msg.Content[0][1];
+			var ulist = msg.Content[1];
+			client.evtlist['~~usor'](ori_usor, now_usor, ulist);
+			break;
+		case '++dialog':
+			client.evtlist['++dialog'](msg.Content[0][0], msg.Content[0][1]);
+			break;
+		default:
+			console.log("???");
+		}
 		console.log(e.data);
 	};
 	this.ws_conn.onclose = function () {
@@ -102,4 +149,8 @@ Client.prototype.Join = function (room_name) {
 Client.prototype.Exitroom = function (if_rm_room) {
 	//if_rm_room == {"rm"||"rsv"}
 	this.send_msg("exitroom", [[if_rm_room]]);
+};
+
+Client.prototype.On = function (event_name, callback) {
+	this.evtlist[event_name] = callback;
 };

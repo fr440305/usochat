@@ -4,7 +4,8 @@
  *
  */
 
-function Client (name) {
+function Client (this_of_callbacks) {
+	this.this_of_callbacks = this_of_callbacks;
 	this.usor_name = name;
 	this.evtlist = {
 		'-)eden':function(rlist){
@@ -38,14 +39,19 @@ function Client (name) {
 			console.log("ERROR", hint);
 		}
 	}
+};
+
+Client.prototype.Connect = function () {
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
 		console.log("@err@ Browser does not support websocket.");
+		return false;
 	} else {
 		this.ws_conn = new WebSocket(
 			"ws://" + document.location.host + "/ws"
 		);
 		this.load_events();
+		return true;
 	}
 };
 
@@ -60,47 +66,47 @@ Client.prototype.load_events = function () {
 		switch (msg.Summary) {
 		case '~~name':
 			var name = msg.Content[0][0];
-			client.evtlist['~~name'](name);
+			client.evtlist['~~name'].call(client.this_of_callbacks, name);
 			break;
 		case 'error':
 			var hint = msg.Content[0][0];
-			client.evtlist['error'](hint);
+			client.evtlist['error'].call(client.this_of_callbacks, hint);
 			break;
 		case '-)eden':
 			var rlist = msg.Content[0];
-			client.evtlist['-)eden'](rlist);
+			client.evtlist['-)eden'].call(client.this_of_callbacks, rlist);
 			break;
 		case '++room':
 			var new_room = msg.Content[0][0];
-			client.evtlist['++room'](new_room);
+			client.evtlist['++room'].call(client.this_of_callbacks, new_room);
 			break;
 		case '--room':
 			var rlist = msg.Content[0];
-			client.evtlist['--room'](rlist);
+			client.evtlist['--room'].call(client.this_of_callbacks, rlist);
 			break;
 		case '-)room':
 			var rname = msg.Content[0][0];
 			msg.Content.shift();
-			client.evtlist['-)room'](rname, msg.Content);
+			client.evtlist['-)room'].call(client.this_of_callbacks, rname, msg.Content);
 			break;
 		case '++usor':
 			var new_usor = msg.Content[0][0];
 			var ulist = msg.Content[1];
-			client.evtlist['++usor'](new_usor, ulist);
+			client.evtlist['++usor'].call(client.this_of_callbacks, new_usor, ulist);
 			break;
 		case '--usor':
 			var gone_usor = msg.Content[0][0];
 			var ulist = msg.Content[1];
-			client.evtlist['--usor'](gone_usor, ulist);
+			client.evtlist['--usor'].call(client.this_of_callbacks, gone_usor, ulist);
 			break;
 		case '~~usor':
 			var ori_usor = msg.Content[0][0];
 			var now_usor = msg.Content[0][1];
 			var ulist = msg.Content[1];
-			client.evtlist['~~usor'](ori_usor, now_usor, ulist);
+			client.evtlist['~~usor'].call(client.this_of_callbacks, ori_usor, now_usor, ulist);
 			break;
 		case '++dialog':
-			client.evtlist['++dialog'](msg.Content[0][0], msg.Content[0][1]);
+			client.evtlist['++dialog'].call(client.this_of_callbacks, msg.Content[0][0], msg.Content[0][1]);
 			break;
 		default:
 			console.log("???");
@@ -152,5 +158,7 @@ Client.prototype.Exitroom = function (if_rm_room) {
 };
 
 Client.prototype.On = function (event_name, callback) {
+	//TODO provide that callback is a function
 	this.evtlist[event_name] = callback;
+	return this;
 };

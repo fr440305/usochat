@@ -1,17 +1,29 @@
 /* frontend/ui.js */
 
 var Alert  = function (hint) {
-	
 }
 
 function EdenPanel (client) {
+	this.client = client;
+
 	var eden_hint = document.createElement("span");
 	eden_hint.innerHTML = "Pick A Room and Click It";
-	this.client = client;
-	this.pan = document.createElement("div");
+
 	this.room_list = document.createElement("div");
+
+	var input_roomname = document.createElement("input");
+	input_roomname.type = "text";
+
+	var confirm_roomname = document.createElement("button");
+	confirm_roomname.innerHTML = "confirm";
+	confirm_roomname.onclick = function () {
+		client.Join(input_roomname.value);
+	};
+	this.pan = document.createElement("div");
 	this.pan.appendChild(eden_hint);
 	this.pan.appendChild(this.room_list);
+	this.pan.appendChild(input_roomname);
+	this.pan.appendChild(confirm_roomname);
 	document.getElementById("_APP_").appendChild(this.pan);
 }
 
@@ -41,7 +53,18 @@ function RoomPanel (client) {
 	exit_room.onclick = function(){
 		client.Exitroom("rsv");
 	};
+	this.dialog_list = document.createElement("div");
+	var say_input = document.createElement("input");
+	var say_confirm = document.createElement("button");
+	say_confirm.onclick = function() {
+		var mydialog = say_input.value;
+		say_input.value = "";
+		client.Say(mydialog);
+	};
 	this.pan.appendChild(exit_room);
+	this.pan.appendChild(this.dialog_list);
+	this.pan.appendChild(say_input);
+	this.pan.appendChild(say_confirm);
 	document.getElementById("_APP_").appendChild(this.pan);
 }
 
@@ -52,6 +75,13 @@ RoomPanel.prototype.Hide = function () {
 RoomPanel.prototype.Show = function () {
 	this.pan.style.display = "block";
 };
+
+RoomPanel.prototype.AddDialogElem = function (usor, dialog) {
+	var new_dialog_elem = document.createElement("p");
+	new_dialog_elem.innerHTML = usor + "--&gt;" + dialog;
+	this.dialog_list.appendChild(new_dialog_elem);
+};
+
 
 function Ui () {
 	var ui = this;
@@ -73,7 +103,7 @@ Ui.prototype.load_events = function () {
 	.On('++usor', this.OnPlusUsor)
 	.On('--usor', this.OnMinusUsor)
 	.On('~~usor', this.OnModiUsor)
-	.On('++dialog', this.OnPlusUialog);
+	.On('++dialog', this.OnPlusDialog);
 };
 
 Ui.prototype.ParseUrl = function () {
@@ -106,6 +136,7 @@ Ui.prototype.OnRoom = function (roomname, chist) {
 };
 
 Ui.prototype.OnPlusUsor = function (new_usor, ulist) {
+
 };
 
 Ui.prototype.OnMinusUsor = function (gone_usor, ulist) {
@@ -115,6 +146,8 @@ Ui.prototype.OnModiUsor = function (oldname, newname, ulist) {
 };
 
 Ui.prototype.OnPlusDialog = function (usor, dialog) {
+	console.log(this);
+	this.room_panel.AddDialogElem(usor, dialog);
 };
 
 var UI = new Ui();

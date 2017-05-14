@@ -28,7 +28,7 @@ function EdenPanel (client) {
 }
 
 EdenPanel.prototype.Hide = function () {
-	this.room_list.innerHTML = "";
+	//this.room_list.innerHTML = "";
 	this.pan.style.display = "none";
 };
 
@@ -45,11 +45,18 @@ EdenPanel.prototype.AddRoomElem = function (room_name) {
 	this.room_list.appendChild(relem);
 };
 
+EdenPanel.prototype.SetRoomList = function (rlist) {
+	this.room_list.innerHTML = "";
+	for (var i = 0; i < rlist.length; i++) {
+		this.AddRoomElem(rlist[i]);
+	}
+};
+
 function RoomPanel (client) {
 	this.client = client;
 	this.pan = document.createElement("div");
 	var exit_room = document.createElement("div");
-	exit_room.innerHTML = "&lt;--";
+	exit_room.innerHTML = "&lt;-- Click here to exit this room.";
 	exit_room.onclick = function(){
 		client.Exitroom("rsv");
 	};
@@ -69,6 +76,7 @@ function RoomPanel (client) {
 }
 
 RoomPanel.prototype.Hide = function () {
+	//this.dialog_list.innerHTML = "";
 	this.pan.style.display = "none";
 };
 
@@ -82,6 +90,12 @@ RoomPanel.prototype.AddDialogElem = function (usor, dialog) {
 	this.dialog_list.appendChild(new_dialog_elem);
 };
 
+RoomPanel.prototype.SetChist = function (chist) {
+	this.dialog_list.innerHTML = "";
+	for (var i = 0; i < chist.length; i++) {
+		this.AddDialogElem(chist[i][0], chist[i][1]);
+	}
+};
 
 function Ui () {
 	var ui = this;
@@ -119,27 +133,30 @@ Ui.prototype.OnModiName = function (myname) {
 Ui.prototype.OnEden = function (rlist) {
 	this.eden_panel.Show();
 	this.room_panel.Hide();
-	for (var i = 0; i < rlist.length; i++) {
-		this.eden_panel.AddRoomElem(rlist[i]);
-	}
+	this.eden_panel.SetRoomList(rlist);
 };
 
 Ui.prototype.OnPlusRoom = function (newroom) {
+	this.eden_panel.AddRoomElem(newroom);
 };
 
 Ui.prototype.OnMinusRoom = function (rlist) {
+	this.eden_panel.SetRoomList(rlist);
 };
 
 Ui.prototype.OnRoom = function (roomname, chist) {
 	this.eden_panel.Hide();
 	this.room_panel.Show();
+	this.room_panel.AddDialogElem("|*System*|", "Now you are in room: " + roomname);
+	this.room_panel.SetChist(chist);
 };
 
 Ui.prototype.OnPlusUsor = function (new_usor, ulist) {
-
+	this.room_panel.AddDialogElem("|*System*|", "New Usor called: " + new_usor + " Add in! Weicome!");
 };
 
 Ui.prototype.OnMinusUsor = function (gone_usor, ulist) {
+	this.room_panel.AddDialogElem("|*System*|", "New Usor called: " + gone_usor + " gone. Bye!");
 };
 
 Ui.prototype.OnModiUsor = function (oldname, newname, ulist) {

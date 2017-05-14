@@ -6,7 +6,7 @@ var Alert  = function (hint) {
 function EdenPanel (client) {
 	this.client = client;
 
-	var eden_hint = document.createElement("span");
+	var eden_hint = document.createElement("p");
 	eden_hint.innerHTML = "Pick A Room and Click It";
 
 	this.room_list = document.createElement("div");
@@ -15,7 +15,7 @@ function EdenPanel (client) {
 	input_roomname.type = "text";
 
 	var confirm_roomname = document.createElement("button");
-	confirm_roomname.innerHTML = "confirm";
+	confirm_roomname.innerHTML = "search(create)room";
 	confirm_roomname.onclick = function () {
 		client.Join(input_roomname.value);
 	};
@@ -63,6 +63,7 @@ function RoomPanel (client) {
 	this.dialog_list = document.createElement("div");
 	var say_input = document.createElement("input");
 	var say_confirm = document.createElement("button");
+	say_confirm.innerHTML = "Send";
 	say_confirm.onclick = function() {
 		var mydialog = say_input.value;
 		say_input.value = "";

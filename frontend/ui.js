@@ -1,24 +1,79 @@
 /* frontend/ui.js */
 
+var Alert  = function (hint) {
+	
+}
+
+function EdenPanel (client) {
+	var eden_hint = document.createElement("span");
+	eden_hint.innerHTML = "Pick A Room and Click It";
+	this.client = client;
+	this.pan = document.createElement("div");
+	this.room_list = document.createElement("div");
+	this.pan.appendChild(eden_hint);
+	this.pan.appendChild(this.room_list);
+	document.getElementById("_APP_").appendChild(this.pan);
+}
+
+EdenPanel.prototype.Hide = function () {
+	this.room_list.innerHTML = "";
+	this.pan.style.display = "none";
+};
+
+EdenPanel.prototype.Show = function () {
+	this.pan.style.display = "block";
+};
+
+EdenPanel.prototype.AddRoomElem = function (room_name) {
+	var relem = document.createElement("div");
+	var client = this.client;
+	relem.className = "_room_elem_";
+	relem.innerHTML = room_name;
+	relem.onclick = function(){client.Join(room_name)};
+	this.room_list.appendChild(relem);
+};
+
+function RoomPanel (client) {
+	this.client = client;
+	this.pan = document.createElement("div");
+	var exit_room = document.createElement("div");
+	exit_room.innerHTML = "&lt;--";
+	exit_room.onclick = function(){
+		client.Exitroom("rsv");
+	};
+	this.pan.appendChild(exit_room);
+	document.getElementById("_APP_").appendChild(this.pan);
+}
+
+RoomPanel.prototype.Hide = function () {
+	this.pan.style.display = "none";
+};
+
+RoomPanel.prototype.Show = function () {
+	this.pan.style.display = "block";
+};
+
 function Ui () {
 	var ui = this;
 	this.client = new Client(this);
+	this.eden_panel = new EdenPanel(this.client);
+	this.room_panel = new RoomPanel(this.client);
 	this.load_events();
 	this.client.Connect();
 }
 
 Ui.prototype.load_events = function () {
 	this.client
-		.On('error', this.OnError)
-		.On('~~name', this.OnModiName)
-		.On('-)eden', this.OnEden)
-		.On('++room', this.OnPlusRoom)
-		.On('--room', this.OnMinusRoom)
-		.On('-)room', this.OnRoom)
-		.On('++usor', this.OnPlusUsor)
-		.On('--usor', this.OnMinusUsor)
-		.On('~~usor', this.OnModiUsor)
-		.On('++dialog', this.OnPlusUialog);
+	.On('error', this.OnError)
+	.On('~~name', this.OnModiName)
+	.On('-)eden', this.OnEden)
+	.On('++room', this.OnPlusRoom)
+	.On('--room', this.OnMinusRoom)
+	.On('-)room', this.OnRoom)
+	.On('++usor', this.OnPlusUsor)
+	.On('--usor', this.OnMinusUsor)
+	.On('~~usor', this.OnModiUsor)
+	.On('++dialog', this.OnPlusUialog);
 };
 
 Ui.prototype.ParseUrl = function () {
@@ -32,16 +87,10 @@ Ui.prototype.OnModiName = function (myname) {
 };
 
 Ui.prototype.OnEden = function (rlist) {
-	console.log(this);
-	var client = this.client;
-	_ROOM_.style.display = 'none';
-	_EDEN_.style.diaplay = 'block';
+	this.eden_panel.Show();
+	this.room_panel.Hide();
 	for (var i = 0; i < rlist.length; i++) {
-		_EDEN_.innerHTML += ("<p id='_ROOM_" + i + "_'>" + rlist[i] + "</p>");
-		var elem = document.getElementById("_ROOM_" + i + "_");
-		elem.onclick = function () {
-			client.Join(elem.innerHTML);
-		};
+		this.eden_panel.AddRoomElem(rlist[i]);
 	}
 };
 
@@ -52,10 +101,8 @@ Ui.prototype.OnMinusRoom = function (rlist) {
 };
 
 Ui.prototype.OnRoom = function (roomname, chist) {
-	_EDEN_.innerHTML = "";
-	_ROOM_.style.display = 'block';
-	_EDEN_.style.diaplay = 'none';
-
+	this.eden_panel.Hide();
+	this.room_panel.Show();
 };
 
 Ui.prototype.OnPlusUsor = function (new_usor, ulist) {

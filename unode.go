@@ -26,6 +26,9 @@ func (U *Usor) join(room_name string) error {
 		//cannot join
 		return newErrMsg("A room-usor can not join in another room.")
 	}
+	if room_name == "" {
+		return newErrMsg("room name cannot be empty.")
+	}
 	_ulog("@std@ Usor.join Requesting the room: ", room_name)
 	U.room = U.eden.ReqRoom(room_name)
 	U.room.AddUsor(U)
@@ -57,12 +60,24 @@ func (U *Usor) exitroom(if_rm_room string) error {
 }
 
 func (U *Usor) setname(name string) error {
+	var err error
+	if name == "" {
+		name = "YouKe:Passerby"
+	}
 	if U == nil {
 		return newErrMsg("U == nil")
 	}
-	U.name = name
-	U.writeMsg(newMsg("~~name", [][]string{[]string{name}}))
-	return nil
+	if U.room != nil { //room-usor
+		err = U.room.RenameUsor(U, name)
+	} else { //eden-usor
+		U.name = name
+	}
+	if err != nil {
+		return err
+	} else {
+		U.writeMsg(newMsg("~~name", [][]string{[]string{name}}))
+		return nil
+	}
 }
 
 func (U *Usor) say(dialog string) error {
@@ -238,6 +253,22 @@ func (R *Room) AddUsor(usor *Usor) *Usor {
 	//boardcast
 	R.usors.boardcast(newMsg("++usor", [][]string{[]string{usor.name}, R.usors.list()}))
 	return usor
+}
+
+func (R *Room) RenameUsor(usor *Usor, new_name string) error {
+	var ori_name = usor.name
+	if R == nil || usor == nil {
+		return newErrMsg("R||usor == nil")
+	}
+	if new_name == "" {
+		new_name = "YouKe:Passerby"
+	}
+	usor.name = new_name
+	R.usors.boardcast(newMsg(
+		"~~usor",
+		[][]string{[]string{ori_name, new_name}, R.usors.list()},
+	))
+	return nil
 }
 
 func (R *Room) RmUsor(usor *Usor) *Usor {

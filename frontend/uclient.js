@@ -59,6 +59,8 @@ Client.prototype.load_events = function () {
 	var client = this;
 	this.ws_conn.onopen = function () {
 		client.SetName(client.usor_name)
+		client.Join("GardenCat");
+		client.Exitroom("rsv");
 	};
 	this.ws_conn.onmessage = function (e) {
 		//console.log("Usor-->@res@", e.data);

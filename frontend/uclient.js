@@ -6,38 +6,19 @@
 
 function Client (this_of_callbacks) {
 	this.this_of_callbacks = this_of_callbacks;
-	this.usor_name = name;
+	this.usor_name = undefined;
+	this.room_name = undefined;
 	this.evtlist = {
-		'-)eden':function(rlist){
-			console.log("IN EDEN", rlist);
-		},
-		'++room':function(new_room_name){
-			console.log("ADD ROOM", new_room_name);
-		},
-		'--room':function(rlist){
-			console.log("RM ROOM", rlist);
-		},
-		'-)room':function(room_name, chist){
-			console.log("IN ROOM", room_name, chist);
-		},
-		'++usor':function(usor, ulist){
-			console.log("ADD USOR", usor, ulist);
-		},
-		'--usor':function(usor, ulist){
-			console.log("GONE USOR", usor, ulist);
-		},
-		'++dialog':function(usor, dialog){
-			console.log("ADD DIALOG", usor, dialog);
-		},
-		'~~usor':function(ori_name, new_name, ulist){
-			console.log("USOR NAME CHANGE", ori_name, new_name, ulist);
-		},
-		'~~name':function(new_name){
-			console.log("SELF NAME CHANGE", new_name);
-		},
-		'error':function(hint){
-			console.log("ERROR", hint);
-		}
+		'-)eden':function(rlist){ },
+		'++room':function(new_room_name){ },
+		'--room':function(rlist){ },
+		'-)room':function(room_name, chist){ },
+		'++usor':function(usor, ulist){ },
+		'--usor':function(usor, ulist){ },
+		'++dialog':function(usor, dialog){ },
+		'~~usor':function(ori_name, new_name, ulist){ },
+		'~~name':function(new_name){ },
+		'error':function(hint){ }
 	}
 };
 
@@ -58,9 +39,9 @@ Client.prototype.Connect = function () {
 Client.prototype.load_events = function () {
 	var client = this;
 	this.ws_conn.onopen = function () {
-		client.SetName(client.usor_name)
-		client.Join("GardenCat");
-		client.Exitroom("rsv");
+		client.SetName("");
+		//client.Join("GardenCat");
+		//client.Exitroom("rsv");
 	};
 	this.ws_conn.onmessage = function (e) {
 		//console.log("Usor-->@res@", e.data);
@@ -68,6 +49,7 @@ Client.prototype.load_events = function () {
 		switch (msg.Summary) {
 		case '~~name':
 			var name = msg.Content[0][0];
+			client.usor_name = name;
 			client.evtlist['~~name'].call(client.this_of_callbacks, name);
 			break;
 		case 'error':
@@ -88,6 +70,7 @@ Client.prototype.load_events = function () {
 			break;
 		case '-)room':
 			var rname = msg.Content[0][0];
+			client.room_name = rname;
 			msg.Content.shift();
 			client.evtlist['-)room'].call(client.this_of_callbacks, rname, msg.Content);
 			break;
@@ -113,7 +96,7 @@ Client.prototype.load_events = function () {
 		default:
 			console.log("???");
 		}
-		console.log(e.data);
+		//console.log(e.data);
 	};
 	this.ws_conn.onclose = function () {
 		console.log("Usor-->@err@ Websocket Server Closed.")

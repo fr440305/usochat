@@ -457,7 +457,7 @@ func (C *Center) RoomNameList() []string {
 }
 
 func (C *Center) Run() {
-	//http.Handle("/", http.FileServer(http.Dir("frontend"))) //TODO set http-header:no-cache.
+	//too verbose ?
 	var u_serve = func(w http.ResponseWriter, r *http.Request, fn string) {
 		if r.Method == "GET" {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")

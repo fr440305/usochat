@@ -457,7 +457,33 @@ func (C *Center) RoomNameList() []string {
 }
 
 func (C *Center) Run() {
-	http.Handle("/", http.FileServer(http.Dir("frontend"))) //TODO set http-header:no-cache.
+	//too verbose ?
+	var u_serve = func(w http.ResponseWriter, r *http.Request, fn string) {
+		if r.Method == "GET" {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Pragma", "no-cache")
+			w.Header().Set("Expires", "0")
+			http.ServeFile(w, r, "./frontend/"+fn)
+		} else {
+			http.Error(w, "Bad Request", 404)
+		}
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			u_serve(w, r, "index.html")
+		} else {
+			http.Error(w, "Bad Request", 404)
+		}
+	})
+	http.HandleFunc("/uclient.js", func(w http.ResponseWriter, r *http.Request) {
+		u_serve(w, r, "uclient.js")
+	})
+	http.HandleFunc("/ui.js", func(w http.ResponseWriter, r *http.Request) {
+		u_serve(w, r, "ui.js")
+	})
+	http.HandleFunc("/ustyle.css", func(w http.ResponseWriter, r *http.Request) {
+		u_serve(w, r, "ustyle.css")
+	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ulog("@std@", "Center.run()", "/ws")
 		C.eden.AddUsor(C.newUsor(w, r))

@@ -3,13 +3,17 @@
 function AlertPanel () {
 }
 
+function LoginPanel () {
+}
+
 function EdenPanel (client) {
 	this.client = client;
-	var eden_hint = document.createElement("p");
-	eden_hint.innerHTML = "Pick A Room and Click It";
 	this.room_list = document.createElement("div");
 	var input_roomname = document.createElement("input");
 	input_roomname.type = "text";
+	input_roomname.onkeydown = function () {
+		//Handle the enter-key.
+	};
 	var confirm_roomname = document.createElement("button");
 	confirm_roomname.innerHTML = "search(create)room";
 	confirm_roomname.onclick = function () {
@@ -18,8 +22,17 @@ function EdenPanel (client) {
 		client.Join(rname);
 	};
 	this.pan = document.createElement("div");
-	this.pan.appendChild(eden_hint);
+	this.pan.appendChild((function(){
+		var eden_hint = document.createElement("p");
+		eden_hint.innerHTML = "<h2>Pick A Room and Click It</h2>" + "<hr />";
+		return eden_hint;
+	})());
 	this.pan.appendChild(this.room_list);
+	this.pan.appendChild((function(){
+		var eden_hint_nr = document.createElement("h2");
+		eden_hint_nr.innerHTML = "...Or you can create a new Room:";
+		return eden_hint_nr;
+	})());
 	this.pan.appendChild(input_roomname);
 	this.pan.appendChild(confirm_roomname);
 	document.getElementById("_APP_").appendChild(this.pan);
@@ -37,8 +50,8 @@ EdenPanel.prototype.Show = function () {
 EdenPanel.prototype.AddRoomElem = function (room_name) {
 	var relem = document.createElement("div");
 	var client = this.client;
-	relem.className = "_room_elem_";
-	relem.innerHTML = room_name;
+	relem.className = "_weak_button_";
+	relem.innerHTML = room_name + "<hr />";
 	relem.onclick = function(){client.Join(room_name)};
 	this.room_list.appendChild(relem);
 };
@@ -55,12 +68,16 @@ function RoomPanel (client) {
 	this.pan = document.createElement("div");
 	this.pan.style.display = "none";
 	var exit_room = document.createElement("div");
-	exit_room.innerHTML = "&lt;-- Click here to exit this room.";
+	exit_room.className = "_weak_button_";
+	exit_room.innerHTML = "&lt;-- Click here to exit this room." + "<hr />";
 	exit_room.onclick = function(){
 		client.Exitroom("rsv");
 	};
 	this.dialog_list = document.createElement("div");
 	var say_input = document.createElement("input");
+	say_input.onkeydown = function () {
+		//handle enter-key.
+	};
 	var say_confirm = document.createElement("button");
 	say_confirm.innerHTML = "Send";
 	say_confirm.onclick = function() {
@@ -156,7 +173,7 @@ Ui.prototype.OnRoom = function (roomname, chist) {
 };
 
 Ui.prototype.OnPlusUsor = function (new_usor, ulist) {
-	this.room_panel.AddSyshintElem("New Usor called: " + new_usor + " Add in! Weicome!");
+	this.room_panel.AddSyshintElem("New Usor called: " + new_usor + " Add in. Welcome!");
 };
 
 Ui.prototype.OnMinusUsor = function (gone_usor, ulist) {

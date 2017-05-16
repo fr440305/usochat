@@ -481,6 +481,9 @@ func (C *Center) Run() {
 	http.HandleFunc("/ui.js", func(w http.ResponseWriter, r *http.Request) {
 		u_serve(w, r, "ui.js")
 	})
+	http.HandleFunc("/ustyle.css", func(w http.ResponseWriter, r *http.Request) {
+		u_serve(w, r, "ustyle.css")
+	})
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		_ulog("@std@", "Center.run()", "/ws")
 		C.eden.AddUsor(C.newUsor(w, r))

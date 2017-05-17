@@ -39,8 +39,16 @@ Client.prototype.Connect = function () {
 
 Client.prototype.load_events = function () {
 	var client = this;
+	var parse_url = function (key) {
+		var res = document.location.search.split(key+'=')[1];
+		if (res === undefined) {
+			return "";
+		} else {
+			return res;
+		}
+	};
 	this.ws_conn.onopen = function () {
-		client.SetName("");
+		client.SetName(parse_url("usorname"));
 		//client.Join("GardenCat");
 		//client.Exitroom("rsv");
 	};

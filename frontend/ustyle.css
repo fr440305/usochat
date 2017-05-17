@@ -22,3 +22,12 @@ input {
 ._about_middle_ {
 	text-align: center;
 }
+
+._alert_ {
+	position: fixed;
+	height: 100px;
+	background-color: #aaa;
+	top: 0;
+	left: 0;
+	padding: 0;
+}

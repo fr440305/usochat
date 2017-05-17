@@ -12,7 +12,6 @@ import "net/http"
 //type Usor maps to a client.
 type Usor struct {
 	name string
-	qmsg *MsgList
 	eden *Eden
 	room *Room
 	conn *websocket.Conn //client <--conn--> usor
@@ -33,7 +32,7 @@ func (U *Usor) join(room_name string) error {
 	U.room = U.eden.ReqRoom(room_name)
 	U.room.AddUsor(U)
 	U.eden.RmUsor(U)
-	_ulog("@std@ Usor.join {room, room_name, usors}={", U.room, U.room.name, U.room.usors, "}")
+	_ulog("@std@ Usor.join room_name=", U.room.name)
 	_ulog("@std@ Usor.join Join Successful.")
 	return nil
 }
@@ -62,7 +61,7 @@ func (U *Usor) exitroom(if_rm_room string) error {
 func (U *Usor) setname(name string) error {
 	var err error
 	if name == "" {
-		name = "YouKe:Passerby"
+		name = "Passerby"
 	}
 	if U == nil {
 		return newErrMsg("U == nil")
@@ -94,6 +93,7 @@ func (U *Usor) say(dialog string) error {
 	return nil
 }
 
+//read msg from client.
 func (U *Usor) readMsg() *Msg {
 	var msg *Msg
 	_, barjson, err := U.conn.ReadMessage()
@@ -211,13 +211,8 @@ func (UL UsorList) list() []string {
 	return res
 }
 
-func (UL UsorList) usorAmount() int64 {
-	return int64(len(UL))
-}
-
 type Room struct {
 	name   string
-	qmsg   *MsgList
 	chist  [][]string //chat history
 	usors  *UsorList
 	center *Center
@@ -328,14 +323,6 @@ func (RL RoomList) lookup(room_name string) *Room {
 	return nil
 }
 
-func (RL RoomList) usorAmount() int64 {
-	return 0
-}
-
-func (RL RoomList) roomAmount() int64 {
-	return int64(len(RL))
-}
-
 func (RL RoomList) list() []string {
 	var res = []string{}
 	for _, r := range RL {
@@ -391,11 +378,10 @@ type Center struct {
 	ws_upgrader websocket.Upgrader //const
 }
 
-func newCenter(pid int) *Center {
+func newCenter() *Center {
 	var center = new(Center)
 	center.eden = center.newEden()
 	center.rooms = new(RoomList)
-	_ulog("@pid@", pid)
 	return center
 }
 
@@ -420,7 +406,6 @@ func (C *Center) NewRoom(name string) *Room {
 	var room = new(Room)
 	_ulog("@std@ Center.newRoom name=", name)
 	room.name = name
-	room.qmsg = new(MsgList)
 	room.chist = [][]string{}
 	room.usors = new(UsorList)
 	room.center = C
@@ -439,7 +424,6 @@ func (C *Center) RmRoom(room *Room) {
 func (C *Center) newUsor(w http.ResponseWriter, r *http.Request) *Usor {
 	var usor = new(Usor)
 	var err error
-	usor.qmsg = new(MsgList)
 	usor.eden = C.eden
 	usor.room = nil
 	usor.conn, err = C.ws_upgrader.Upgrade(w, r, w.Header())
@@ -456,7 +440,7 @@ func (C *Center) RoomNameList() []string {
 	return C.rooms.list()
 }
 
-func (C *Center) Run() {
+func (C *Center) Run(port_id string) {
 	//too verbose ?
 	var u_serve = func(w http.ResponseWriter, r *http.Request, fn string) {
 		if r.Method == "GET" {
@@ -488,5 +472,5 @@ func (C *Center) Run() {
 		_ulog("@std@", "Center.run()", "/ws")
 		C.eden.AddUsor(C.newUsor(w, r))
 	})
-	http.ListenAndServe(":9999", nil)
+	http.ListenAndServe(port_id, nil)
 }

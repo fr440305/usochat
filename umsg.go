@@ -53,5 +53,3 @@ func (M Msg) Error() string {
 		return "" //not an error
 	}
 }
-
-type MsgList []*Msg

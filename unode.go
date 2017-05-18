@@ -440,37 +440,70 @@ func (C *Center) RoomNameList() []string {
 	return C.rooms.list()
 }
 
-func (C *Center) Run(port_id string) {
-	//too verbose ?
-	var u_serve = func(w http.ResponseWriter, r *http.Request, fn string) {
+func (C *Center) OnWsUrlRequested(w http.ResponseWriter, r *http.Request) {
+	C.eden.AddUsor(C.newUsor(w, r))
+}
+
+type Userver struct {
+	center Center
+}
+
+func newUserver() *Userver {
+	var res = new(Userver)
+	res.center = *newCenter()
+	return res
+}
+
+func (US Userver) serveFile(w http.ResponseWriter, r *http.Request, filename string) {
+	//u_serve
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+	http.ServeFile(w, r, "./frontend/"+filename)
+}
+
+func (US Userver) indexHandleFunc(w http.ResponseWriter, r *http.Request) {
+	//when r.URL.Path == "/"
+	if r.URL.Path == "/" {
 		if r.Method == "GET" {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Pragma", "no-cache")
-			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, "./frontend/"+fn)
+			US.serveFile(w, r, "index.html")
 		} else {
-			http.Error(w, "Bad Request", 404)
+			http.Error(w, "Bad Request", 403)
 		}
+	} else {
+		http.Error(w, "File Not Found", 404)
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			u_serve(w, r, "index.html")
+}
+
+func (US Userver) fileHandleFunc(w http.ResponseWriter, r *http.Request) {
+	//provided that r.URL.Path != "/"
+	if r.URL.Path != "/" {
+		if r.Method == "GET" {
+			US.serveFile(w, r, r.URL.Path[1:]) //take off '/'
 		} else {
-			http.Error(w, "Bad Request", 404)
+			http.Error(w, "Bad Request", 403)
 		}
-	})
-	http.HandleFunc("/uclient.js", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "uclient.js")
-	})
-	http.HandleFunc("/ui.js", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "ui.js")
-	})
-	http.HandleFunc("/ustyle.css", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "ustyle.css")
-	})
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		_ulog("@std@", "Center.run()", "/ws")
-		C.eden.AddUsor(C.newUsor(w, r))
-	})
+	} else {
+		http.Error(w, "Cannot Get File Name", 403)
+
+	}
+}
+
+func (US Userver) wsUrlReqHandleFunc(w http.ResponseWriter, r *http.Request) {
+	//provided that r.URL.Path == "/ws"
+	US.center.OnWsUrlRequested(w, r)
+}
+
+func (US *Userver) ListenAndServe(port_id string) {
+	http.HandleFunc("/", US.indexHandleFunc)
+	http.HandleFunc("/ws", US.wsUrlReqHandleFunc)
+	http.HandleFunc("/ui.js", US.fileHandleFunc)
+	http.HandleFunc("/index.html", US.fileHandleFunc)
+	http.HandleFunc("/uclient.js", US.fileHandleFunc)
+	http.HandleFunc("/ustyle.css", US.fileHandleFunc)
 	http.ListenAndServe(port_id, nil)
 }
+
+/* __main__:
+newUserver().ListenAndServe(":9999")
+*/

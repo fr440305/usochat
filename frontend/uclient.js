@@ -18,7 +18,8 @@ function Client (this_of_callbacks) {
 		'++dialog':function(usor, dialog){ },
 		'~~usor':function(ori_name, new_name, ulist){ },
 		'~~name':function(new_name){ },
-		'error':function(hint){ }
+		'error':function(hint){ },
+		'close':function(){ }
 	}
 };
 
@@ -38,8 +39,16 @@ Client.prototype.Connect = function () {
 
 Client.prototype.load_events = function () {
 	var client = this;
+	var parse_url = function (key) {
+		var res = document.location.search.split(key+'=')[1];
+		if (res === undefined) {
+			return "";
+		} else {
+			return res;
+		}
+	};
 	this.ws_conn.onopen = function () {
-		client.SetName("");
+		client.SetName(parse_url("usorname"));
 		//client.Join("GardenCat");
 		//client.Exitroom("rsv");
 	};
@@ -100,8 +109,10 @@ Client.prototype.load_events = function () {
 	};
 	this.ws_conn.onclose = function () {
 		console.log("Usor-->@err@ Websocket Server Closed.")
+		client.evtlist['close'].call(client.this_of_callbacks);
 	};
 	this.ws_conn.onerror = function (e) {
+		client.evtlist['error'].call(client.this_of_callbacks, "@err@" + e.data);
 		console.log("@err@", e.data);
 	};
 };

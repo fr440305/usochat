@@ -445,12 +445,14 @@ func (C *Center) OnWsUrlRequested(w http.ResponseWriter, r *http.Request) {
 }
 
 type Userver struct {
-	center Center
+	center   Center
+	http_mux *http.ServeMux
 }
 
 func newUserver() *Userver {
 	var res = new(Userver)
 	res.center = *newCenter()
+	res.http_mux = http.NewServeMux()
 	return res
 }
 
@@ -494,12 +496,12 @@ func (US Userver) wsUrlReqHandleFunc(w http.ResponseWriter, r *http.Request) {
 	US.center.OnWsUrlRequested(w, r)
 }
 
-func (US *Userver) ListenAndServe(port_id string) {
-	http.HandleFunc("/", US.indexHandleFunc)
-	http.HandleFunc("/ws", US.wsUrlReqHandleFunc)
-	http.HandleFunc("/ui.js", US.fileHandleFunc)
-	http.HandleFunc("/index.html", US.fileHandleFunc)
-	http.HandleFunc("/uclient.js", US.fileHandleFunc)
-	http.HandleFunc("/ustyle.css", US.fileHandleFunc)
-	http.ListenAndServe(port_id, nil)
+func (US *Userver) Mux() *http.ServeMux {
+	US.http_mux.HandleFunc("/", US.indexHandleFunc)
+	US.http_mux.HandleFunc("/ws", US.wsUrlReqHandleFunc)
+	US.http_mux.HandleFunc("/ui.js", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/index.html", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/uclient.js", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/ustyle.css", US.fileHandleFunc)
+	return US.http_mux
 }

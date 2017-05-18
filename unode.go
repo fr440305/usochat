@@ -503,7 +503,3 @@ func (US *Userver) ListenAndServe(port_id string) {
 	http.HandleFunc("/ustyle.css", US.fileHandleFunc)
 	http.ListenAndServe(port_id, nil)
 }
-
-/* __main__:
-newUserver().ListenAndServe(":9999")
-*/

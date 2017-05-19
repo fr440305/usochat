@@ -160,7 +160,8 @@ Ui.prototype.load_events = function () {
 		.On('--usor', this.OnMinusUsor)
 		.On('~~usor', this.OnModiUsor)
 		.On('++dialog', this.OnPlusDialog)
-	.On('close', this.OnClose);
+		.On('.close', this.OnClose)
+		.On('.unsupport', this.OnUnsupport);
 };
 
 Ui.prototype.ParseUrl = function () {

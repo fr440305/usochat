@@ -5,9 +5,6 @@
 package main
 
 import "github.com/gorilla/websocket"
-import "net/http"
-
-//import "strconv"
 
 //type Usor maps to a client.
 type Usor struct {
@@ -100,7 +97,7 @@ func (U *Usor) readMsg() *Msg {
 	if err != nil {
 		//going-away
 		U.conn.Close()
-		return newMsg("gone", [][]string{[]string{}})
+		return newMsg(".close", [][]string{[]string{}})
 	} else {
 		//here may appears error
 		msg = newBarMsg(barjson)
@@ -130,7 +127,7 @@ func (U *Usor) handleClient() {
 		client_msg = U.readMsg()
 		_ulog("\n@std@ Usor.handleClient", client_msg.Summary)
 		switch client_msg.Summary {
-		case "gone":
+		case ".close": //msg with a dot-prefix in summary means it is a private msg (only appears in server-end).
 			err = U.exitroom("rsv")
 			return //the only return of client-handler.
 		case "setname":

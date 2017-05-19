@@ -3,7 +3,7 @@
 
 package main
 
-//import "html"
+import "html"
 import "encoding/json"
 
 const SET_DESCRIPTION byte = 1
@@ -36,6 +36,18 @@ func newBarMsg(barjson []byte) *Msg {
 func newErrMsg(errinfo string) *Msg {
 	return newMsg("error", [][]string{[]string{errinfo}})
 }
+
+/*
+func (M *Msg) HtmlEscape() *Msg {
+	M.Summary = html.EscapeString(M.Summary)
+	for i, _ := range M.Content {
+		for j := range M.Content[i] {
+			M.Content[i][j] = html.EscapeString(M.Content[i][j])
+		}
+	}
+	return M
+}
+*/
 
 func (M *Msg) barjsonify() []byte {
 	res, err := json.Marshal(M)

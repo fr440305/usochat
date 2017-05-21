@@ -3,7 +3,6 @@
 
 package main
 
-import "html"
 import "encoding/json"
 
 const SET_DESCRIPTION byte = 1

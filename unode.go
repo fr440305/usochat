@@ -5,6 +5,7 @@
 package main
 
 import "github.com/gorilla/websocket"
+import "net/http"
 
 //type Usor maps to a client.
 type Usor struct {
@@ -500,5 +501,6 @@ func (US *Userver) Mux() *http.ServeMux {
 	US.http_mux.HandleFunc("/index.html", US.fileHandleFunc)
 	US.http_mux.HandleFunc("/uclient.js", US.fileHandleFunc)
 	US.http_mux.HandleFunc("/ustyle.css", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/favicon.ico", US.fileHandleFunc)
 	return US.http_mux
 }

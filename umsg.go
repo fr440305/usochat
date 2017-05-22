@@ -1,7 +1,7 @@
 //umsg.go
 //This source file defined type Msg.
 
-package main
+package uso
 
 import "encoding/json"
 

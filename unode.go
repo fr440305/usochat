@@ -2,7 +2,7 @@
 //This go source file defined three go type: Usor, Room, and Center.
 //Author(s): __HUO_YU__
 
-package main
+package uso
 
 import "github.com/gorilla/websocket"
 import "net/http"
@@ -447,7 +447,7 @@ type Userver struct {
 	http_mux *http.ServeMux
 }
 
-func newUserver() *Userver {
+func NewUserver() *Userver {
 	var res = new(Userver)
 	res.center = *newCenter()
 	res.http_mux = http.NewServeMux()

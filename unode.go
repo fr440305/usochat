@@ -442,14 +442,16 @@ func (C *Center) OnWsUrlRequested(w http.ResponseWriter, r *http.Request) {
 	C.eden.AddUsor(C.newUsor(w, r))
 }
 
+func HandleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
+	newCenter().OnWsUrlRequested(w, r)
+}
+
 type Userver struct {
-	center   Center
 	http_mux *http.ServeMux
 }
 
 func NewUserver() *Userver {
 	var res = new(Userver)
-	res.center = *newCenter()
 	res.http_mux = http.NewServeMux()
 	return res
 }
@@ -484,23 +486,12 @@ func (US Userver) fileHandleFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad Request", 403)
 		}
 	} else {
-		http.Error(w, "Cannot Get File Name", 403)
-
+		US.indexHandleFunc(w, r)
 	}
 }
 
-func (US Userver) wsUrlReqHandleFunc(w http.ResponseWriter, r *http.Request) {
-	//provided that r.URL.Path == "/ws"
-	US.center.OnWsUrlRequested(w, r)
-}
-
 func (US *Userver) Mux() *http.ServeMux {
-	US.http_mux.HandleFunc("/", US.indexHandleFunc)
-	US.http_mux.HandleFunc("/ws", US.wsUrlReqHandleFunc)
-	US.http_mux.HandleFunc("/ui.js", US.fileHandleFunc)
-	US.http_mux.HandleFunc("/index.html", US.fileHandleFunc)
-	US.http_mux.HandleFunc("/uclient.js", US.fileHandleFunc)
-	US.http_mux.HandleFunc("/ustyle.css", US.fileHandleFunc)
-	US.http_mux.HandleFunc("/favicon.ico", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/", US.fileHandleFunc)
+	US.http_mux.HandleFunc("/ws", HandleWebSocketUrl)
 	return US.http_mux
 }

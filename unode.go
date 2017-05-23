@@ -468,7 +468,7 @@ func (US Userver) indexHandleFunc(w http.ResponseWriter, r *http.Request) {
 	//when r.URL.Path == "/"
 	if r.URL.Path == "/" {
 		if r.Method == "GET" {
-			US.serveFile(w, r, "uso_app.html")
+			US.serveFile(w, r, "app_uso.html")
 		} else {
 			http.Error(w, "Bad Request", 403)
 		}

@@ -2,12 +2,17 @@
 //This go source file defined three go type: Usor, Room, and Center.
 //Author(s): __HUO_YU__
 
-package main
+package uso
 
 import "github.com/gorilla/websocket"
 import "net/http"
 
-//import "strconv"
+var DefaultUserver = NewUserver()
+
+func HandleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std HandleWebSocketUrl w r")
+	DefaultUserver.handleWebSocketUrl(w, r)
+}
 
 //type Usor maps to a client.
 type Usor struct {
@@ -100,7 +105,7 @@ func (U *Usor) readMsg() *Msg {
 	if err != nil {
 		//going-away
 		U.conn.Close()
-		return newMsg("gone", [][]string{[]string{}})
+		return newMsg(".close", [][]string{[]string{}})
 	} else {
 		//here may appears error
 		msg = newBarMsg(barjson)
@@ -130,7 +135,7 @@ func (U *Usor) handleClient() {
 		client_msg = U.readMsg()
 		_ulog("\n@std@ Usor.handleClient", client_msg.Summary)
 		switch client_msg.Summary {
-		case "gone":
+		case ".close": //msg with a dot-prefix in summary means it is a private msg (only appears in server-end).
 			err = U.exitroom("rsv")
 			return //the only return of client-handler.
 		case "setname":
@@ -440,37 +445,64 @@ func (C *Center) RoomNameList() []string {
 	return C.rooms.list()
 }
 
-func (C *Center) Run(port_id string) {
-	//too verbose ?
-	var u_serve = func(w http.ResponseWriter, r *http.Request, fn string) {
+func (C *Center) OnWsUrlRequested(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std@ Center.OnWsUrlRequested")
+	C.eden.AddUsor(C.newUsor(w, r))
+}
+
+type Userver struct {
+	center   *Center
+	http_mux *http.ServeMux
+}
+
+func NewUserver() *Userver {
+	var res = new(Userver)
+	res.center = newCenter()
+	res.http_mux = http.NewServeMux()
+	return res
+}
+
+func (US Userver) serveFile(w http.ResponseWriter, r *http.Request, filename string) {
+	//u_serve
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+	http.ServeFile(w, r, "./frontend/"+filename)
+}
+
+func (US Userver) handleIndex(w http.ResponseWriter, r *http.Request) {
+	//when r.URL.Path == "/"
+	if r.URL.Path == "/" {
 		if r.Method == "GET" {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Pragma", "no-cache")
-			w.Header().Set("Expires", "0")
-			http.ServeFile(w, r, "./frontend/"+fn)
+			US.serveFile(w, r, "app_uso.html")
 		} else {
-			http.Error(w, "Bad Request", 404)
+			http.Error(w, "Bad Request", 403)
 		}
+	} else {
+		http.Error(w, "File Not Found", 404)
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			u_serve(w, r, "index.html")
+}
+
+func (US Userver) handleFiles(w http.ResponseWriter, r *http.Request) {
+	//provided that r.URL.Path != "/"
+	if r.URL.Path != "/" {
+		if r.Method == "GET" {
+			US.serveFile(w, r, r.URL.Path[1:]) //take off '/'
 		} else {
-			http.Error(w, "Bad Request", 404)
+			http.Error(w, "Bad Request", 403)
 		}
-	})
-	http.HandleFunc("/uclient.js", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "uclient.js")
-	})
-	http.HandleFunc("/ui.js", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "ui.js")
-	})
-	http.HandleFunc("/ustyle.css", func(w http.ResponseWriter, r *http.Request) {
-		u_serve(w, r, "ustyle.css")
-	})
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		_ulog("@std@", "Center.run()", "/ws")
-		C.eden.AddUsor(C.newUsor(w, r))
-	})
-	http.ListenAndServe(port_id, nil)
+	} else {
+		US.handleIndex(w, r)
+	}
+}
+
+func (US Userver) handleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std@ Userver.handleWebSocketUrl")
+	US.center.OnWsUrlRequested(w, r)
+}
+
+func (US *Userver) Mux() *http.ServeMux {
+	US.http_mux.HandleFunc("/", US.handleFiles)
+	US.http_mux.HandleFunc("/ws", US.handleWebSocketUrl)
+	return US.http_mux
 }

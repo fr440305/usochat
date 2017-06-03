@@ -19,13 +19,15 @@ function Client (this_of_callbacks) {
 		'~~usor':function(ori_name, new_name, ulist){ },
 		'~~name':function(new_name){ },
 		'error':function(hint){ },
-		'close':function(){ }
+		'.close':function(){ },
+		'.unsupport': function (){ }
 	}
 };
 
 Client.prototype.Connect = function () {
 	if (window.WebSocket === undefined) {
 		//error: unsupport.
+		this.evtlist['.unsupport'].call(this.this_of_callbacks);
 		console.log("@err@ Browser does not support websocket.");
 		return false;
 	} else {

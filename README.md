@@ -1,138 +1,53 @@
-# USO - Rewrite - prelease.
+# USO Version 1.0
 
-Uso is a simple online chatting platfrom.
+虽说现在还没到 1.0， 但是也快了。是时候为 1.0 的发布做准备了。这一段仅在 1.0 之前的开
+发中做提醒用，所以，该段落将在项目合并到master分支之后删除。
 
-## USE IT RIGHT NOW
+USO的中文名叫做乌说。这名字是我随便起的。乌说是一款运行在浏览器上的、自由免费的、即用即走
+的聊天平台（说白了就是个破网站），也就是说，带有主流浏览器的终端设备都可以使用该平台。
 
-You can go to [here](http://45.118.135.218:9999/)
-to try, but it does not work all the time.
+## 现在使用
 
-## Install the server to your computer
+点击 [这里](http://45.118.135.218:9999/)，应该就能打开了。如果打不开的话，恭喜你，你
+发现了该平台的潜在问题。来，不要害羞，为美好的项目献上 issue 吧。
 
-...
+## 将乌说的服务器安装在自己的电脑上
 
-## Project Structure
+- 工具要求：首先要有Go的编译器。其次，Go的环境已经被正确配置（$GOPATH 已被正确定义）。
+- 知识要求：假定读者知道什么是go的工作空间（$GOPATH）。
 
-I will describe the structure of this platform
-in three perspectives: feature, modules,
-and status.
-(用例功能、模块结构、状态转换)
- 
-### Overview
+### Linux / Mac OS 系统
 
-This platform is developed by using
-HTML/JavaScript as front-end and Golang
-as server.
+- 用go get 命令下载：
+``` go get github.com/fr440305/uso ```
 
-The front-end and server will be connected
-by using WebSocket.
+- 运行：
+``` cd $GOPATH/src/github.com/fr440305/uso/usage && go run ./main.go ```
 
-### Features
-
-```
-[Client] <-- JSON --> [Usor]
-[Client] <-- JSON --> [Usor]
-
-      ... ... ... ...
-
-[Client] <--(JSON)--> [Usor]
-                       |  ^
-                (Msg)  |  |  (Msg)
-                       V  |
-                     [Center]
-```
-
-### Modules
-
-```
-Notation:
-
-*.* -> Files.
-<*> -> Types.
-(*) -> Functions.
-```
-
-- unode.go
-	- <Usor>
-	- <Room>
-	- <Center>
-- urouter.go
-	- <Router>
-- umain.go
-	- (_main):func()()
-- udb.go
-	- <Debugger>
-- uso.sh
-	- (start)
-	- (clean)
-	- (project)
-	- (help)
-- udaemon.sh
-	- ...
-
-### Dependencies
-
-The dependent package(s) is/are:
-
-- github.com/gorilla/websocket
-	* An implementation of WebSocket in Golang.
+- 打开浏览器，在地址栏输入：
+```http://127.0.0.1:9999/```
 
 
-### Code Style
+### Windows 系统
 
-The Types will be named in a single word with Capital Initial.
-(So the name of the type must has only one word.)
-eg:
+MinGW解决一切问题。解决不了？我也很无奈啊。
 
-```Go
-type Node struct {...}
-type Center struct {...}
-```
+## 项目当前状况
 
-The methods and the constructors will be coded in camelStyle.
-Use as more than one word as possible.
-eg:
-```Go
-func newCenter () *Center
-func (C *Center) newNode () *Node
-func (c *Center) boardcast () error
-func (n *Node) sendMsgToCenter () error
-```
+开发中。好得很。如果哪天不好了，读者将会在这里看到详细的说明。
 
-The tool functions (utilities) will be named in canmelStyle,
-with a underscore prefix (stands for its father-class is ```_```,
-except for main function).
-eg:
-```Go
-func _strToMsg (source string) ([]byte, err)
-```
+## 想为项目做贡献吗？
 
-The variables inside the function or method will be named
-in underscore style. Only lowercase.
-eg:
-```Go
-func (S *Sample) showExample () {
-	var sample_var = 0
-	var no_uppercase_letter = 9
-	fmt.Prinln(sample_var, no_uppercase_letter)
-}
-```
+不想的话也没关系……
 
-The constants will be named ALL_UPPERCASE style. Use more than
-one word as possible.
-eg:
-```Go
-const ONEWORD = 0
-const ALL_UPPERCASE = 8
-```
+### 如果有Github账号：
 
+- ```Fork```，```Star```。
+- 对写代码感兴趣的话，可以读一下乌说的文档（link goes here）。文档在项目的根目录下，叫DOC.md。读完文档之后，能大致了解
+乌说的结构和工作原理的话，不妨来一发```Pull Request```。
+- 对写代码不太感兴趣的话，欢迎提 issue。
 
-## Author
+### 如果没有Github账号：
 
-FireRain :=: 火雨
-email: fr440305@gmail.com
-
-## Bugs
-
-- (fixed) Sometimes, it will crash.
-Maybe is has infinite loop somewhere. (apr, 1, 2017)
+- 每天晚上睡觉之前，向神明祷告，祈祷这个项目能开发顺利。
+- 在[这里](http://45.118.135.218:9999/)开房灌水。

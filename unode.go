@@ -7,6 +7,13 @@ package uso
 import "github.com/gorilla/websocket"
 import "net/http"
 
+var DefaultUserver = NewUserver()
+
+func HandleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std HandleWebSocketUrl w r")
+	DefaultUserver.handleWebSocketUrl(w, r)
+}
+
 //type Usor maps to a client.
 type Usor struct {
 	name string
@@ -439,19 +446,18 @@ func (C *Center) RoomNameList() []string {
 }
 
 func (C *Center) OnWsUrlRequested(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std@ Center.OnWsUrlRequested")
 	C.eden.AddUsor(C.newUsor(w, r))
 }
 
-func HandleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
-	newCenter().OnWsUrlRequested(w, r)
-}
-
 type Userver struct {
+	center   *Center
 	http_mux *http.ServeMux
 }
 
 func NewUserver() *Userver {
 	var res = new(Userver)
+	res.center = newCenter()
 	res.http_mux = http.NewServeMux()
 	return res
 }
@@ -464,7 +470,7 @@ func (US Userver) serveFile(w http.ResponseWriter, r *http.Request, filename str
 	http.ServeFile(w, r, "./frontend/"+filename)
 }
 
-func (US Userver) indexHandleFunc(w http.ResponseWriter, r *http.Request) {
+func (US Userver) handleIndex(w http.ResponseWriter, r *http.Request) {
 	//when r.URL.Path == "/"
 	if r.URL.Path == "/" {
 		if r.Method == "GET" {
@@ -477,7 +483,7 @@ func (US Userver) indexHandleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (US Userver) fileHandleFunc(w http.ResponseWriter, r *http.Request) {
+func (US Userver) handleFiles(w http.ResponseWriter, r *http.Request) {
 	//provided that r.URL.Path != "/"
 	if r.URL.Path != "/" {
 		if r.Method == "GET" {
@@ -486,12 +492,17 @@ func (US Userver) fileHandleFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad Request", 403)
 		}
 	} else {
-		US.indexHandleFunc(w, r)
+		US.handleIndex(w, r)
 	}
 }
 
+func (US Userver) handleWebSocketUrl(w http.ResponseWriter, r *http.Request) {
+	_ulog("@std@ Userver.handleWebSocketUrl")
+	US.center.OnWsUrlRequested(w, r)
+}
+
 func (US *Userver) Mux() *http.ServeMux {
-	US.http_mux.HandleFunc("/", US.fileHandleFunc)
-	US.http_mux.HandleFunc("/ws", HandleWebSocketUrl)
+	US.http_mux.HandleFunc("/", US.handleFiles)
+	US.http_mux.HandleFunc("/ws", US.handleWebSocketUrl)
 	return US.http_mux
 }

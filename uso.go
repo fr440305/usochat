@@ -6,6 +6,28 @@ import "encoding/json"
 import "fmt"
 
 const (
+	// MsgType:
+
+	// UsoMsg		-- um : 由 uso-conn 发出的消息：tohall, toroom, exitroom
+	//	um:->h		-- UsoMsg_ToHall
+	//	um:->r		-- UsoMsg_ToRoom
+	//	um:r->		-- UsoMsg_ExitRoom
+	//	um:say		-- UsoMsg_Say
+	//	um:inv		-- UsoMsg_Invalid
+
+	// HallRunnerResp	-- hr : 由 hall.run 返还给 uso-client 的消息
+	//	hr:u->h		-- HallRunnerResp_UsoToHall
+	//	hr:uh->		-- HallRunnerResp_UsoExitHall
+
+	// HallServerResp	-- hs : 由 ServeGuest 返还给 uso-client 的消息
+	//	hs:hist		-- HallServerResp_Hist
+
+	// HallJob		-- hj : 由 ServeGuest 发给 h-jobs 的任务
+
+	// RoomRunnerResp	-- rr :
+	// RoomServerResp	-- rs :
+	// RoomJob		-- rj :
+
 	// ["u->h"]
 	MsgType_uso_to_hall = "u->h"
 
@@ -156,19 +178,20 @@ type Hall struct {
 	jobs      chan Message
 }
 
-func (h Hall) Run() {
-	if h.IsRunning == false {
-		go func() {
-			h.IsRunning = true
-			for msg := range h.jobs {
-				// uso_to_hall | uso_to_room | uso_exit_hall |
-				fmt.Println("Hall Run", msg)
-			}
-		}()
-	}
+func (h Hall) run() {
+	go func() {
+		h.IsRunning = true
+		for msg := range h.jobs {
+			// uso_to_hall | uso_to_room | uso_exit_hall |
+			fmt.Println("Hall Run", msg)
+		}
+	}()
 }
 
 func (h Hall) ServeGuest(uc *Usoconn) {
+	if h.IsRunning == false {
+		h.run()
+	}
 	h.Guests = append(h.Guests, uc)
 	h.jobs <- Message{MsgType_uso_to_hall}
 	//read uc.R
@@ -178,7 +201,6 @@ func (h Hall) ServeGuest(uc *Usoconn) {
 		switch msg.Type() {
 		case MsgType_uso_to_room:
 			fmt.Println("Hall ServeGuest to-room")
-
 			room := getRoomByName(msg.Cont()[0], Uso_Roompool)
 			if room == nil {
 				uc.W <- Message{MsgType_uso_err, "no such room"}
@@ -205,19 +227,9 @@ var hall = Hall{
 }
 
 // export
-func Run() {
-	fmt.Println("Run")
-	go hall.Run()
-}
-
-// export
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	// Uso_online += 1
 	fmt.Println("new usor addin")
-	if hall.IsRunning == false {
-		fmt.Println("ServeWs Run Hall Run")
-		Run()
-	}
 	conn, err := Uso_websocket_upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("ServeWs upgrade error")

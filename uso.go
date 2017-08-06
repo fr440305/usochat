@@ -25,44 +25,6 @@ const (
 	HallResp_Error = "hr:err"
 )
 
-var Uso_connpool = []Uconn{}
-
-func connpool_add(pool []Uconn, uc Uconn) {
-}
-
-func connpool_del(pool []Uconn, uc *Uconn) {
-}
-
-var Uso_roompool = []Room{}
-
-func roompool_getNameList() []string {
-	list := []string{}
-	for _, r := range Uso_roompool {
-		list = append(list, r.Name)
-	}
-	return list
-}
-
-func roompool_add(r Room) {
-}
-
-func roompool_del(r *Room) {
-}
-
-func roompool_getRoomByName(name string) *Room {
-	for i, r := range Uso_roompool {
-		if r.Name == name {
-			return &Uso_roompool[i]
-		}
-	}
-	return nil
-}
-
-var Uso_websocket_upgrader = &websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 type Message []string
 
 // string -> []interface{} // tokenlize
@@ -91,123 +53,83 @@ func (um Message) ToJbar() []byte {
 	}
 }
 
-type Uconn struct {
+type Conn struct {
 	//if you are not in a Room, you do not need a name
 	Name   string
 	Quit   bool
 	wsconn *websocket.Conn
 }
 
-func (c *Uconn) Read() (string, []string) {
+func (c *Conn) Read() (string, []string) {
 	fmt.Println("Read - here")
 	_, bar, err := c.wsconn.ReadMessage()
-	fmt.Println("Uconn.Read string(bar) == ", string(bar))
+	fmt.Println("Conn.Read string(bar) == ", string(bar))
 	if err != nil {
 		c.Quit = true
-		fmt.Println("Uconn.Read ty, co == ", UsoMsg_Die, nil)
+		fmt.Println("Conn.Read ty, co == ", UsoMsg_Die, nil)
 		return UsoMsg_Die, nil
 	}
 	msg := NewMessage(bar)
 	if len(msg) == 0 {
-		fmt.Println("Uconn.Read ty, co == ", "", nil)
+		fmt.Println("Conn.Read ty, co == ", "", nil)
 		return "", nil
 	} else {
-		fmt.Println("Uconn.Read ty, co == ", msg[0], msg[1:])
+		fmt.Println("Conn.Read ty, co == ", msg[0], msg[1:])
 		return msg[0], msg[1:]
 	}
 }
 
-func (c *Uconn) Write(msg_cont ...string) {
-	c.wsconn.WriteMessage(websocket.TextMessage, Message(msg_cont).ToJbar())
+func (c *Conn) Write(msg_type string, msg_cont ...string) {
+	msg := append([]string{msg_type}, msg_cont...)
+	c.wsconn.WriteMessage(websocket.TextMessage, Message(msg).ToJbar())
 
 }
 
-type Room struct {
-	Name  string
-	Hist  []string
-	Conns []*Uconn
-}
+type Hall []*Conn
 
-// public.
-func (r Room) ServeMember(uc *Uconn) {
-	// jobs <-- for all ur.Conns.R
-	// if ur.jobs is closed (ur.IsActive == false), then open it and run the runner
-	// for a := range uc.R { ur.jobs <- a }; close and quit
-}
-
-type Hall []*Uconn
-
-func (h Hall) horn(msg_cont ...string) {
-	for _, uc := range []*Uconn(h) {
-		uc.Write(msg_cont...)
+func (h Hall) horn(msg_type string, msg_cont ...string) {
+	for _, uc := range []*Conn(h) {
+		uc.Write(msg_type, msg_cont...)
 	}
 }
 
-func (h Hall) addAndHorn(uc *Uconn) {
-	h = []*Uconn(append([]*Uconn(h), uc))
+func (h *Hall) addAndHorn(uc *Conn) {
+	*h = append(*h, uc)
 	h.horn(HallHorn_UsoToHall)
 }
 
-func (h Hall) delAndHorn(uc *Uconn) {
+func (h *Hall) delAndHorn(uc *Conn) {
+	for i := 0; i < len(*h); i++ {
+		if (*h)[i] == uc {
+			*h = append((*h)[:i], (*h)[i+1:]...)
+			return
+		}
+	}
 }
 
-func (h Hall) handleUsoReq_ToRoom(uc *Uconn, co []string) {
+func (h *Hall) handleUsoReq_ToRoom(uc *Conn, co []string) {
 	if co == nil {
 		uc.Write(HallResp_Error, "Room name is required")
 		return
 	}
-	room := roompool_getRoomByName(co[0])
-	if room == nil {
-		uc.Write(HallResp_Error, "No such room")
-		return
-	}
-	h.delAndHorn(uc)
-	room.ServeMember(uc)
-	// check if this room is empty
-	if len(room.Conns) == 0 {
-		roompool_del(room)
-	}
-	if uc.Quit {
-		return
-	} else {
-		h.addAndHorn(uc)
-	}
 }
 
-func (h Hall) handleUsoReq_AddRoom(uc *Uconn, co []string) {
+func (h *Hall) handleUsoReq_AddRoom(uc *Conn, co []string) {
 	if co == nil {
 		uc.Write(HallResp_Error, "Room name is required")
 		return
 	}
-	if roompool_getRoomByName(co[0]) != nil {
-		uc.Write(HallResp_Error, "This room exists")
-		return
-	}
-	room := Room{
-		Name:  co[0],
-		Hist:  []string{},
-		Conns: []*Uconn{},
-	}
-	roompool_add(room)
-	h.horn(HallHorn_UsoAddRoom, co[0])
-	room.ServeMember(uc)
-	if len(room.Conns) == 0 {
-		roompool_del(&room)
-	}
-	if uc.Quit {
-		return
-	} else {
-		h.addAndHorn(uc)
-	}
 }
 
-func (h Hall) ServeGuest(uc *Uconn) {
+func (h *Hall) ServeGuest(uc *Conn) {
 	h.addAndHorn(uc)
-	uc.Write(append([]string{HallResp_Rooms}, roompool_getNameList()...)...)
+	fmt.Println(h)
+	uc.Write(HallResp_Rooms, "waiting..")
 	for {
 		ty, co := uc.Read()
 		if ty == UsoMsg_Die {
 			fmt.Println("Hall.ServeGuest die")
+			h.delAndHorn(uc)
 			return
 		}
 		fmt.Println("Hall.ServeGuest ty, co == ", ty, co)
@@ -222,22 +144,64 @@ func (h Hall) ServeGuest(uc *Uconn) {
 	}
 }
 
-var Uso_hall = Hall{}
+type Room struct {
+	Name  string
+	Hist  []string
+	Conns []*Conn
+}
 
-// export
-func ServeWs(w http.ResponseWriter, r *http.Request) {
-	conn, err := Uso_websocket_upgrader.Upgrade(w, r, nil)
+func (r Room) ServeMember(uc *Conn) {
+	// jobs <-- for all ur.Conns.R
+	// if ur.jobs is closed (ur.IsActive == false), then open it and run the runner
+	// for a := range uc.R { ur.jobs <- a }; close and quit
+}
+
+var Uso_hall = &Hall{} // -> var uso_Hall = ...
+
+var uso_WebsocketUpgrader = &websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+//============
+//--connpool--
+//============
+
+var Uso_connpool = []*Conn{} // -> var uso_ConnPool = ConnPool{}
+
+func connpool_add(w http.ResponseWriter, r *http.Request) *Conn {
+	ws_conn, err := uso_WebsocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("ServeWs upgrade error")
 		return
 	}
-	uso_conn := Uconn{
+	conn := Conn{
 		Name:   "",
 		Quit:   false,
-		wsconn: conn,
+		wsconn: ws_conn,
 	}
-	Uso_connpool = append(Uso_connpool, uso_conn)
-	fmt.Println("ServeWs Uso_connpool == ", Uso_connpool)
-	Uso_hall.ServeGuest(&uso_conn)
-	connpool_del(Uso_connpool, &uso_conn)
+	Uso_connpool = append(Uso_connpool, &conn)
+	return conn
+}
+
+func connpool_del(c *Conn) {
+}
+
+//============
+//--roompool--
+//============
+
+var Uso_roompool = []*Room{} // -> var uso_RoomPool = RoomPool{}
+
+func roompool_add(name string) *Room {
+}
+
+func roompool_del(r *Room) {
+}
+
+// export
+func ServeWs(w http.ResponseWriter, r *http.Request) {
+	conn := connpool_add(w, r)
+	Uso_hall.ServeGuest(&conn)
+	connpool_del(conn)
 }

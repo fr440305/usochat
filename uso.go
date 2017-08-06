@@ -5,10 +5,8 @@ import "net/http"
 import "encoding/json"
 import "fmt"
 
+// MsgType:
 const (
-	// MsgType:
-
-	// um : 由 uso-conn 发出的消息
 	UsoMsg_ToRoom   = "um:inr"
 	UsoMsg_AddRoom  = "um:++r"
 	UsoMsg_ExitRoom = "um:exr"
@@ -37,7 +35,6 @@ func NewMessage(bar []byte) Message {
 		fmt.Println(err.Error())
 		return Message{""}
 	}
-	fmt.Println("NewMessage", string(bar))
 	return Message(*strarr)
 }
 
@@ -61,20 +58,15 @@ type Conn struct {
 }
 
 func (c *Conn) Read() (string, []string) {
-	fmt.Println("Read - here")
 	_, bar, err := c.wsconn.ReadMessage()
-	fmt.Println("Conn.Read string(bar) == ", string(bar))
 	if err != nil {
 		c.Quit = true
-		fmt.Println("Conn.Read ty, co == ", UsoMsg_Die, nil)
 		return UsoMsg_Die, nil
 	}
 	msg := NewMessage(bar)
 	if len(msg) == 0 {
-		fmt.Println("Conn.Read ty, co == ", "", nil)
 		return "", nil
 	} else {
-		fmt.Println("Conn.Read ty, co == ", msg[0], msg[1:])
 		return msg[0], msg[1:]
 	}
 }
@@ -102,22 +94,9 @@ func (h *Hall) delAndHorn(uc *Conn) {
 	for i := 0; i < len(*h); i++ {
 		if (*h)[i] == uc {
 			*h = append((*h)[:i], (*h)[i+1:]...)
+			h.horn(HallHorn_UsoExitHall)
 			return
 		}
-	}
-}
-
-func (h *Hall) handleUsoReq_ToRoom(uc *Conn, co []string) {
-	if co == nil {
-		uc.Write(HallResp_Error, "Room name is required")
-		return
-	}
-}
-
-func (h *Hall) handleUsoReq_AddRoom(uc *Conn, co []string) {
-	if co == nil {
-		uc.Write(HallResp_Error, "Room name is required")
-		return
 	}
 }
 
@@ -135,9 +114,7 @@ func (h *Hall) ServeGuest(uc *Conn) {
 		fmt.Println("Hall.ServeGuest ty, co == ", ty, co)
 		switch ty {
 		case UsoMsg_ToRoom:
-			//h.handleUsoReq_ToRoom(uc, co)
 		case UsoMsg_AddRoom:
-			//h.handleUsoReq_AddRoom(uc, co)
 		default:
 			uc.Write(HallResp_Error, "Invalid message")
 		}
@@ -151,10 +128,11 @@ type Room struct {
 }
 
 func (r Room) ServeMember(uc *Conn) {
-	// jobs <-- for all ur.Conns.R
-	// if ur.jobs is closed (ur.IsActive == false), then open it and run the runner
-	// for a := range uc.R { ur.jobs <- a }; close and quit
 }
+
+//========
+//--vars--
+//========
 
 var Uso_hall = &Hall{} // -> var uso_Hall = ...
 
@@ -173,7 +151,7 @@ func connpool_add(w http.ResponseWriter, r *http.Request) *Conn {
 	ws_conn, err := uso_WebsocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("ServeWs upgrade error")
-		return
+		return nil
 	}
 	conn := Conn{
 		Name:   "",
@@ -181,10 +159,19 @@ func connpool_add(w http.ResponseWriter, r *http.Request) *Conn {
 		wsconn: ws_conn,
 	}
 	Uso_connpool = append(Uso_connpool, &conn)
-	return conn
+	return &conn
 }
 
 func connpool_del(c *Conn) {
+	for i := 0; i < len(Uso_connpool); i++ {
+		if Uso_connpool[i] == c {
+			Uso_connpool = append(Uso_connpool[:i], Uso_connpool[i+1:]...)
+		}
+	}
+}
+
+func connpool_lentostr() string {
+	return "0"
 }
 
 //============
@@ -194,6 +181,7 @@ func connpool_del(c *Conn) {
 var Uso_roompool = []*Room{} // -> var uso_RoomPool = RoomPool{}
 
 func roompool_add(name string) *Room {
+	return nil
 }
 
 func roompool_del(r *Room) {
@@ -202,6 +190,9 @@ func roompool_del(r *Room) {
 // export
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	conn := connpool_add(w, r)
-	Uso_hall.ServeGuest(&conn)
+	if conn == nil {
+		return
+	}
+	Uso_hall.ServeGuest(conn)
 	connpool_del(conn)
 }

@@ -8,52 +8,51 @@ import "fmt"
 const (
 	// MsgType:
 
-	// UsoMsg		-- um : 由 uso-conn 发出的消息：tohall, toroom, exitroom
-	//	um:->h		-- UsoMsg_ToHall
-	//	um:->r		-- UsoMsg_ToRoom
-	//	um:r->		-- UsoMsg_ExitRoom
-	//	um:say		-- UsoMsg_Say
-	//	um:inv		-- UsoMsg_Invalid
+	// um : 由 uso-conn 发出的消息
+	UsoMsg_ToRoom   = "um:inr"
+	UsoMsg_AddRoom  = "um:++r"
+	UsoMsg_ExitRoom = "um:exr"
+	UsoMsg_Say      = "um:say"
+	UsoMsg_Die      = "um:die"
 
-	// HallRunnerResp	-- hr : 由 hall.run 返还给 uso-client 的消息
-	//	hr:u->h		-- HallRunnerResp_UsoToHall
-	//	hr:uh->		-- HallRunnerResp_UsoExitHall
+	HallHorn_UsoToHall   = "hh:uinh"
+	HallHorn_UsoExitHall = "hh:uexh"
+	HallHorn_UsoAddRoom  = "hh:u++r"
+	HallHorn_DelRoom     = "hh:r--"
+	HallHorn_Error       = "hh:err"
 
-	// HallServerResp	-- hs : 由 ServeGuest 返还给 uso-client 的消息
-	//	hs:hist		-- HallServerResp_Hist
-
-	// HallJob		-- hj : 由 ServeGuest 发给 h-jobs 的任务
-
-	// RoomRunnerResp	-- rr :
-	// RoomServerResp	-- rs :
-	// RoomJob		-- rj :
-
-	// ["u->h"]
-	MsgType_uso_to_hall = "u->h"
-
-	// ["u->r", room-name]
-	MsgType_uso_to_room = "u->r"
-
-	// ["u++r", room-name]
-	MsgType_uso_new_room = "u++r"
-
-	// ["uerr", err-situation]
-	MsgType_uso_err = "uerr"
-
-	// ["uh->"]
-	MsgType_uso_exit_hall = "uh->"
-	MsgType_uso_exit_room = "ur->"
-	MsgType_uso_quit      = "u->x"
-	// ...
+	HallResp_Rooms = "hr:rooms"
+	HallResp_Error = "hr:err"
 )
 
-var Uso_connpool = []Usoconn{}
-var Uso_Roompool = []Room{}
+var Uso_connpool = []Uconn{}
 
-func getRoomByName(name string, roompool []Room) *Room {
-	for i, r := range Uso_Roompool {
+func connpool_add(pool []Uconn, uc Uconn) {
+}
+
+func connpool_del(pool []Uconn, uc *Uconn) {
+}
+
+var Uso_roompool = []Room{}
+
+func roompool_getNameList() []string {
+	list := []string{}
+	for _, r := range Uso_roompool {
+		list = append(list, r.Name)
+	}
+	return list
+}
+
+func roompool_add(r Room) {
+}
+
+func roompool_del(r *Room) {
+}
+
+func roompool_getRoomByName(name string) *Room {
+	for i, r := range Uso_roompool {
 		if r.Name == name {
-			return &Uso_Roompool[i]
+			return &Uso_roompool[i]
 		}
 	}
 	return nil
@@ -80,169 +79,165 @@ func NewMessage(bar []byte) Message {
 	return Message(*strarr)
 }
 
-func (um Message) Type() string {
-	if len([]string(um)) == 0 {
-		return ""
-	} else {
-		fmt.Println("Type", um[0])
-		return um[0]
-	}
-}
-
-func (um Message) Cont() []string {
-	if len([]string(um)) <= 1 {
-		return nil
-	} else {
-		return um[1:]
-	}
-}
-
 // return []byte(`["Type", "Cont-1", "Cont-2", ... , "Cont-n"]`)
 // use json.Marshal
 func (um Message) ToJbar() []byte {
 	bar, err := json.Marshal(um)
 	if err != nil {
-		return []byte("[" + MsgType_uso_err + "]")
+		fmt.Println("Message.ToJbar error", err.Error())
+		return []byte("")
 	} else {
 		return bar
 	}
 }
 
-type Usoconn struct {
+type Uconn struct {
 	//if you are not in a Room, you do not need a name
 	Name   string
 	Quit   bool
-	R      chan Message
-	W      chan Message
 	wsconn *websocket.Conn
 }
 
-// public.
-func (uc Usoconn) Run() {
-	// if err in wsconn then close R and close W.
-	go func(rch chan Message) {
-		//wsconn -> uc.R
-		for {
-			_, cont, err := uc.wsconn.ReadMessage()
-			if err != nil {
-				uc.Quit = true
-				fmt.Println("Usoconn Run uso conn exit.")
-				rch <- Message{MsgType_uso_quit}
-				close(rch)
-				return
-			} else {
-				fmt.Println("Usoconn Run", string(cont))
-				rch <- NewMessage(cont)
-			}
-		}
-	}(uc.R)
-	go func(wch chan Message) {
-		//uc.W -> wsconn
-		for {
-			msg := <-wch
-			err := uc.wsconn.WriteMessage(
-				websocket.TextMessage,
-				msg.ToJbar(),
-			)
-			if err != nil {
-				uc.Quit = true
-				close(wch)
-				return
-			}
-		}
-	}(uc.W)
+func (c *Uconn) Read() (string, []string) {
+	fmt.Println("Read - here")
+	_, bar, err := c.wsconn.ReadMessage()
+	fmt.Println("Uconn.Read string(bar) == ", string(bar))
+	if err != nil {
+		c.Quit = true
+		fmt.Println("Uconn.Read ty, co == ", UsoMsg_Die, nil)
+		return UsoMsg_Die, nil
+	}
+	msg := NewMessage(bar)
+	if len(msg) == 0 {
+		fmt.Println("Uconn.Read ty, co == ", "", nil)
+		return "", nil
+	} else {
+		fmt.Println("Uconn.Read ty, co == ", msg[0], msg[1:])
+		return msg[0], msg[1:]
+	}
+}
+
+func (c *Uconn) Write(msg_cont ...string) {
+	c.wsconn.WriteMessage(websocket.TextMessage, Message(msg_cont).ToJbar())
+
 }
 
 type Room struct {
 	Name  string
 	Hist  []string
-	Conns []*Usoconn
-	jobs  chan Message // if no one, runner will close it and quit.
-}
-
-func (r Room) run() {
-	// open the job clannel
-	// for a := range jobs {...}; close and quit
+	Conns []*Uconn
 }
 
 // public.
-func (r Room) ServeMember(uc *Usoconn) {
+func (r Room) ServeMember(uc *Uconn) {
 	// jobs <-- for all ur.Conns.R
 	// if ur.jobs is closed (ur.IsActive == false), then open it and run the runner
 	// for a := range uc.R { ur.jobs <- a }; close and quit
 }
 
-type Hall struct {
-	Guests    []*Usoconn
-	IsRunning bool
-	jobs      chan Message
-}
+type Hall []*Uconn
 
-func (h Hall) run() {
-	go func() {
-		h.IsRunning = true
-		for msg := range h.jobs {
-			// uso_to_hall | uso_to_room | uso_exit_hall |
-			fmt.Println("Hall Run", msg)
-		}
-	}()
-}
-
-func (h Hall) ServeGuest(uc *Usoconn) {
-	if h.IsRunning == false {
-		h.run()
+func (h Hall) horn(msg_cont ...string) {
+	for _, uc := range []*Uconn(h) {
+		uc.Write(msg_cont...)
 	}
-	h.Guests = append(h.Guests, uc)
-	h.jobs <- Message{MsgType_uso_to_hall}
-	//read uc.R
-	for msg := range uc.R {
-		// toroom | newroom
-		fmt.Println("Hall ServeGuest", msg, msg.Type(), "type|cont", msg.Cont())
-		switch msg.Type() {
-		case MsgType_uso_to_room:
-			fmt.Println("Hall ServeGuest to-room")
-			room := getRoomByName(msg.Cont()[0], Uso_Roompool)
-			if room == nil {
-				uc.W <- Message{MsgType_uso_err, "no such room"}
-			} else {
-				room.ServeMember(uc)
-				//then, they leave.
-				// but not sure if us still active.
-				h.Guests = append(h.Guests, uc)
-				h.jobs <- Message{MsgType_uso_to_hall}
-			}
-		case MsgType_uso_new_room:
+}
+
+func (h Hall) addAndHorn(uc *Uconn) {
+	h = []*Uconn(append([]*Uconn(h), uc))
+	h.horn(HallHorn_UsoToHall)
+}
+
+func (h Hall) delAndHorn(uc *Uconn) {
+}
+
+func (h Hall) handleUsoReq_ToRoom(uc *Uconn, co []string) {
+	if co == nil {
+		uc.Write(HallResp_Error, "Room name is required")
+		return
+	}
+	room := roompool_getRoomByName(co[0])
+	if room == nil {
+		uc.Write(HallResp_Error, "No such room")
+		return
+	}
+	h.delAndHorn(uc)
+	room.ServeMember(uc)
+	// check if this room is empty
+	if len(room.Conns) == 0 {
+		roompool_del(room)
+	}
+	if uc.Quit {
+		return
+	} else {
+		h.addAndHorn(uc)
+	}
+}
+
+func (h Hall) handleUsoReq_AddRoom(uc *Uconn, co []string) {
+	if co == nil {
+		uc.Write(HallResp_Error, "Room name is required")
+		return
+	}
+	if roompool_getRoomByName(co[0]) != nil {
+		uc.Write(HallResp_Error, "This room exists")
+		return
+	}
+	room := Room{
+		Name:  co[0],
+		Hist:  []string{},
+		Conns: []*Uconn{},
+	}
+	roompool_add(room)
+	h.horn(HallHorn_UsoAddRoom, co[0])
+	room.ServeMember(uc)
+	if len(room.Conns) == 0 {
+		roompool_del(&room)
+	}
+	if uc.Quit {
+		return
+	} else {
+		h.addAndHorn(uc)
+	}
+}
+
+func (h Hall) ServeGuest(uc *Uconn) {
+	h.addAndHorn(uc)
+	uc.Write(append([]string{HallResp_Rooms}, roompool_getNameList()...)...)
+	for {
+		ty, co := uc.Read()
+		if ty == UsoMsg_Die {
+			fmt.Println("Hall.ServeGuest die")
+			return
+		}
+		fmt.Println("Hall.ServeGuest ty, co == ", ty, co)
+		switch ty {
+		case UsoMsg_ToRoom:
+			//h.handleUsoReq_ToRoom(uc, co)
+		case UsoMsg_AddRoom:
+			//h.handleUsoReq_AddRoom(uc, co)
 		default:
+			uc.Write(HallResp_Error, "Invalid message")
 		}
 	}
-	// uc.R closed:
-	h.jobs <- Message{MsgType_uso_exit_hall}
-	//remove
 }
 
-var hall = Hall{
-	Guests:    []*Usoconn{},
-	IsRunning: false,
-	jobs:      make(chan Message),
-}
+var Uso_hall = Hall{}
 
 // export
 func ServeWs(w http.ResponseWriter, r *http.Request) {
-	// Uso_online += 1
-	fmt.Println("new usor addin")
 	conn, err := Uso_websocket_upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("ServeWs upgrade error")
 		return
 	}
-	uso_conn := Usoconn{
+	uso_conn := Uconn{
 		Name:   "",
 		Quit:   false,
-		R:      make(chan Message),
-		W:      make(chan Message),
 		wsconn: conn,
 	}
 	Uso_connpool = append(Uso_connpool, uso_conn)
-	uso_conn.Run()
-	hall.ServeGuest(&uso_conn)
+	fmt.Println("ServeWs Uso_connpool == ", Uso_connpool)
+	Uso_hall.ServeGuest(&uso_conn)
+	connpool_del(Uso_connpool, &uso_conn)
 }

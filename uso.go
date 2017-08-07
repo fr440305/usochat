@@ -8,34 +8,28 @@ import "fmt"
 
 // MsgType:
 const (
-	//["um:inr", <room name>]
-	UsoMsg_ToRoom = "um:inr"
-
-	//["um:++r", <room name>]
-	UsoMsg_AddRoom  = "um:++r"
+	UsoMsg_ToRoom   = "um:inr" //["um:inr", <room name>, <uso name>]
+	UsoMsg_AddRoom  = "um:++r" //["um:++r", <room name>]
 	UsoMsg_ExitRoom = "um:exr"
 	UsoMsg_Say      = "um:say"
 
-	// ["um:die"]
-	UsoMsg_Die = "um:die"
+	UsoMsg_Die = "um:die" // ["um:die"]
 
-	// ["hh:uinh", <len of connpool>]
-	HallHorn_UsoToHall = "hh:uinh"
+	HallHorn_UsoToHall   = "hh:uinh" // ["hh:uinh", <len of connpool>]
+	HallHorn_UsoExitHall = "hh:uexh" // ["hh:uexh", <len of connpool>]
+	HallHorn_UsoAddRoom  = "hh:u++r" // ["hh:u++r", <room name>]
+	HallHorn_DelRoom     = "hh:r--"  // ["hh:r--", <room 1>, <room 2>, ..., <room n>]
 
-	// ["hh:uexh", <len of connpool>]
-	HallHorn_UsoExitHall = "hh:uexh"
+	HallResp_Rooms = "hr:rooms" // ["hr:rooms", <room 1>, <room 2>, ... , <room n>]
+	HallResp_Error = "hr:err"   // ["hr:err", <error description>]
 
-	// ["hh:u++r", <room name>]
-	HallHorn_UsoAddRoom = "hh:u++r"
+	RoomHorn_UsoToRoom   = "rh:uinr"
+	RoomHorn_UsoExitRoom = "rh:uexr"
+	RoomHorn_UsoSay      = "rh:usay"
 
-	// ["hh:r--", <room 1>, <room 2>, ..., <room n>]
-	HallHorn_DelRoom = "hh:r--"
-
-	// ["hr:rooms", <room 1>, <room 2>, ... , <room n>]
-	HallResp_Rooms = "hr:rooms"
-
-	// ["hr:err", <error description>]
-	HallResp_Error = "hr:err"
+	RoomResp_Members = "rr:mems"
+	RoomResp_Hist    = "rr:hist"
+	RoomResp_Error   = "rr:err"
 )
 
 type Message []string
@@ -76,12 +70,15 @@ func (c *Conn) Read() (string, []string) {
 	_, bar, err := c.wsconn.ReadMessage()
 	if err != nil {
 		c.Quit = true
-		return UsoMsg_Die, nil
+		fmt.Println("Conn.Read", UsoMsg_Die, []string{})
+		return UsoMsg_Die, []string{}
 	}
 	msg := NewMessage(bar)
 	if len(msg) == 0 {
+		fmt.Println("Conn.Read", "", []string{})
 		return "", []string{}
 	} else {
+		fmt.Println("Conn.Read", msg[0], msg[1:])
 		return msg[0], msg[1:]
 	}
 }
@@ -102,14 +99,18 @@ func (h Hall) horn(msg_type string, msg_cont ...string) {
 
 func (h *Hall) addAndHorn(uc *Conn) {
 	*h = append(*h, uc)
-	h.horn(HallHorn_UsoToHall, connpool_lentostr())
+	h.horn(HallHorn_UsoToHall, strconv.Itoa(connpool_len()))
 }
 
 func (h *Hall) delAndHorn(uc *Conn) {
 	for i := 0; i < len(*h); i++ {
 		if (*h)[i] == uc {
 			*h = append((*h)[:i], (*h)[i+1:]...)
-			h.horn(HallHorn_UsoExitHall, connpool_lentostr())
+			n := connpool_len()
+			if uc.Quit {
+				n = n - 1
+			}
+			h.horn(HallHorn_UsoExitHall, strconv.Itoa(n))
 			return
 		}
 	}
@@ -128,17 +129,19 @@ func (h *Hall) ServeGuest(uc *Conn) {
 			h.delAndHorn(uc)
 			return
 		case UsoMsg_ToRoom:
-			if len(co) == 0 {
-				uc.Write(HallResp_Error, "Room name is required.")
-				return
+			if len(co) < 2 {
+				uc.Write(HallResp_Error, "Arguments not enough: minium 2.")
+				break
 			}
 			room := roompool_getRoomByName(co[0])
 			if room == nil {
 				uc.Write(HallResp_Error, "No such room.")
-				return
+				break
 			}
 			h.delAndHorn(uc)
+			uc.Name = co[1]
 			room.ServeMember(uc)
+			uc.Name = ""
 			if uc.Quit {
 				return
 			} else {
@@ -157,7 +160,7 @@ func (h *Hall) ServeGuest(uc *Conn) {
 				h.horn(HallHorn_UsoAddRoom, co[0])
 			}
 		default:
-			uc.Write(HallResp_Error, "Invalid message")
+			uc.Write(HallResp_Error, "Invalid message type.")
 		}
 	}
 }
@@ -168,7 +171,62 @@ type Room struct {
 	Conns []*Conn
 }
 
-func (r Room) ServeMember(uc *Conn) {
+func (r *Room) horn(ty string, co ...string) {
+	for _, m := range r.Conns {
+		m.Write(ty, co...)
+	}
+}
+
+func (r *Room) addAndHorn(uc *Conn) {
+	(*r).Conns = append((*r).Conns, uc)
+	r.horn(RoomHorn_UsoToRoom, uc.Name)
+}
+
+func (r *Room) delAndHorn(uc *Conn) {
+	for i, m := range (*r).Conns {
+		if uc == m {
+			(*r).Conns = append((*r).Conns[:i], (*r).Conns[i+1:]...)
+			r.horn(RoomHorn_UsoExitRoom, r.getNameList()...)
+		}
+	}
+}
+
+func (r Room) getNameList() []string {
+	list := []string{}
+	for _, m := range r.Conns {
+		list = append(list, m.Name)
+	}
+	return list
+}
+
+func (r *Room) ServeMember(uc *Conn) {
+	if uc.Name == "" {
+		uc.Write(RoomResp_Error, "No name no way.")
+		return
+	}
+	r.addAndHorn(uc)
+	uc.Write(RoomResp_Members, r.getNameList()...)
+	uc.Write(RoomResp_Hist, r.Hist...)
+	for {
+		ty, co := uc.Read()
+		fmt.Println("Room.ServeMember ty, co ==", ty, co)
+		switch ty {
+		case UsoMsg_Die: // co = []
+			fallthrough
+		case UsoMsg_ExitRoom: // co = []
+			r.delAndHorn(uc)
+			return
+		case UsoMsg_Say: // co = [<dialog>]
+			if len(co) != 1 {
+				uc.Write(RoomResp_Error, "Argument of say is wrong.")
+				break
+			}
+			r.horn(RoomHorn_UsoSay, uc.Name, co[0])
+			r.Hist = append(r.Hist, uc.Name, co[0])
+		default:
+			uc.Write(RoomResp_Error, "Invalid message type.")
+		}
+	}
 }
 
 //========
@@ -211,8 +269,8 @@ func connpool_del(c *Conn) {
 	}
 }
 
-func connpool_lentostr() string {
-	return strconv.Itoa(len(Uso_connpool))
+func connpool_len() int {
+	return len(Uso_connpool)
 }
 
 //============
@@ -265,9 +323,13 @@ func roompool_namelist() []string {
 // export
 func ServeWs(w http.ResponseWriter, r *http.Request) {
 	conn := connpool_add(w, r)
+	fmt.Println("ServeWs ConnPool Connin", Uso_connpool)
+	fmt.Println("ServeWs RoomPool Connin", Uso_roompool)
 	if conn == nil {
 		return
 	}
 	Uso_hall.ServeGuest(conn)
 	connpool_del(conn)
+	fmt.Println("ServeWs ConnPool Connout", Uso_connpool)
+	fmt.Println("ServeWs RoomPool Connout", Uso_roompool)
 }

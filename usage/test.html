@@ -114,7 +114,6 @@ function UI_AddRoom (roomname) {
 	})());
 }
 
-</script>
 
 <script>
 
@@ -124,7 +123,6 @@ var HandlerSeq = {
 
 
 HallHorn_UsoToHall : function (msg) {
-
 },
 HallHorn_UsoExitHall : function (msg) {
 },
@@ -155,7 +153,13 @@ RoomResp_Error : function (msg) {
 function MessageHandler (msg) {
 	var ty = msg.shift();
 	var co = msg;
-	console.log("Server: ty:", ty, "co:", co)
+	console.log("Server: ty:", ty, "co:", co);
+	var hf = HandlerSeq[ty];
+	if (ty === undefined) {
+		console.log("Server Message Error.");
+	} else {
+		hf(co);
+	}
 }
 
 var C = new Usoclient ("ws://" + document.location.host + "/uso/conn", MessageHandler);

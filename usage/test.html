@@ -1,0 +1,174 @@
+<!doctype html>
+
+<html>
+<head>
+	<meta charset='utf-8' name='viewport' content='initial-scale=1.0;'>
+	<title>.test</title>
+</head>
+<body>
+
+
+<h1>&lt; Test &gt;</h1>
+
+
+
+<div id='_HALL_'>
+	<p>/ Hall /</p>
+	<div id='_HALL_ROOMS_'>
+	</div>
+</div>
+
+<div id='_ROOM_'>
+	<p>/ <span id='_ROOM_NAME'></span> /</p>
+</div>
+
+
+
+
+<script type='text/javascript'>
+
+
+// client.js
+
+//===========
+//--msgtype--
+//===========
+
+var UsoMsg_ToRoom   = "um:inr"
+var UsoMsg_AddRoom  = "um:++r"
+var UsoMsg_ExitRoom = "um:exr"
+var UsoMsg_Say      = "um:say"
+//var UsoMsg_Die = "um:die" // ["um:die"]
+
+var HallHorn_UsoToHall   = "hh:uinh" // ["hh:uinh", <len of connpool>]
+var HallHorn_UsoExitHall = "hh:uexh" // ["hh:uexh", <len of connpool>]
+var HallHorn_UsoAddRoom  = "hh:u++r" // ["hh:u++r", <room name>]
+var HallHorn_DelRoom     = "hh:r--"  // ["hh:r--", <room 1>, <room 2>, ..., <room n>]
+
+var HallResp_Rooms = "hr:rooms" // ["hr:rooms", <room 1>, <room 2>, ... , <room n>]
+var HallResp_Error = "hr:err"   // ["hr:err", <error description>]
+
+var RoomHorn_UsoToRoom   = "rh:uinr"
+var RoomHorn_UsoExitRoom = "rh:uexr"
+var RoomHorn_UsoSay      = "rh:usay"
+
+var RoomResp_Members = "rr:mems"
+var RoomResp_Hist    = "rr:hist"
+var RoomResp_Error   = "rr:err"
+
+
+//=============
+//--usoclient--
+//=============
+
+function Usoclient (url, msg_callback) {
+	if (WebSocket === undefined) {
+	} else {
+		this.wsclient = new WebSocket(url);
+		this.wsclient.onmessage = function (e) {
+			msg_callback(JSON.parse(e.data))
+		}
+	}
+}
+
+Usoclient.prototype.AddRoom = function (room_name) {
+	this.send([UsoMsg_AddRoom, room_name])
+}
+
+Usoclient.prototype.ToRoom = function (room_name, my_name) {
+	this.send([UsoMsg_ToRoom, room_name, my_name])
+}
+
+Usoclient.prototype.ExitRoom = function () {
+	this.send([UsoMsg_ExitRoom])
+}
+
+Usoclient.prototype.Say = function (dialog) {
+	this.send([UsoMsg_Say, dialog])
+}
+
+// @ param message : []string
+Usoclient.prototype.send = function(message) {
+	this.wsclient.send(JSON.stringify(message))
+	console.log("Client->", JSON.stringify(message))
+}
+
+</script>
+
+<script>
+
+//======
+//--ui--
+//======
+
+function UI_AddRoom (roomname) {
+	_HALL_ROOMS_.appendChild((function(){
+		var p = document.createElement("p")
+		var r = document.createElement("button")
+		r.appendChild(document.createTextNode(roomname))
+		r.onclick = function(){
+			console.log("UI_AddRoom", roomname)
+		}
+		p.appendChild(r)
+		return p;
+	})());
+}
+
+</script>
+
+<script>
+
+// test.js
+
+var HandlerSeq = {
+
+
+HallHorn_UsoToHall : function (msg) {
+
+},
+HallHorn_UsoExitHall : function (msg) {
+},
+HallHorn_UsoAddRoom : function (msg) {
+},
+HallHorn_DelRoom : function (msg) {
+},
+HallResp_Rooms : function (msg) {
+},
+HallResp_Error: function (msg) {
+},
+RoomHorn_UsoToRoom : function (msg) {
+},
+RoomHorn_UsoExitRoom: function (msg) {
+},
+RoomHorn_UsoSay : function (msg) {
+},
+RoomResp_Members : function (msg) {
+},
+RoomResp_Hist : function (msg) {
+},
+RoomResp_Error : function (msg) {
+}
+
+
+}
+
+function MessageHandler (msg) {
+	var ty = msg.shift();
+	var co = msg;
+	console.log("Server: ty:", ty, "co:", co)
+	{
+		HallHorn_UsoToHall: function () {
+		}
+		
+		//...
+	}[ty]();
+
+}
+
+var C = new Usoclient ("ws://" + document.location.host + "/uso/conn", MessageHandler);
+
+
+</script>
+
+</body>
+</html>

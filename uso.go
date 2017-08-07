@@ -1,5 +1,6 @@
 package uso // import "github.com/fr440305/uso"
 
+import "strconv"
 import "github.com/gorilla/websocket"
 import "net/http"
 import "encoding/json"
@@ -171,7 +172,7 @@ func connpool_del(c *Conn) {
 }
 
 func connpool_lentostr() string {
-	return "0"
+	return strconv.Itoa(len(Uso_connpool))
 }
 
 //============
@@ -185,6 +186,14 @@ func roompool_add(name string) *Room {
 }
 
 func roompool_del(r *Room) {
+}
+
+func roompool_getRoomByName(name string) *Room {
+	return nil
+}
+
+func roompool_namelist() []string {
+	return nil
 }
 
 // export

@@ -156,13 +156,6 @@ function MessageHandler (msg) {
 	var ty = msg.shift();
 	var co = msg;
 	console.log("Server: ty:", ty, "co:", co)
-	{
-		HallHorn_UsoToHall: function () {
-		}
-		
-		//...
-	}[ty]();
-
 }
 
 var C = new Usoclient ("ws://" + document.location.host + "/uso/conn", MessageHandler);

@@ -11,17 +11,61 @@
 	<p>/ Hall /</p>
 	<span id='_HALL_how_many_'></span>
 	<div id='_HALL_rooms_'></div>
+	<p> New Room: <input id='_HALL_newroom_'> </p>
+	<p> Your Name: <input id='_HALL_myname_'> </p>
+	<p> <button id='_HALL_newroom_comfirm_'> Comfirm </button> </p>
+	
 </div>
+<hr />
 
 <div id='_ROOM_'>
-	<p>/ <span id='_ROOM_NAME'></span> /</p>
+	<p>/ <span id='_ROOM_name_'></span> /</p>
+	<button id='_ROOM_exit_'> Exit </button>
+	<input id='_ROOM_dialog_' type='text'>
+	<button id='_ROOM_dialog_send_'>Send</button>
+	<div id='_ROOM_member_'> </div>
+	<div id='_ROOM_diapool_'> </div>
 </div>
 
 
 
 
 <script type='text/javascript'>
+//===========
+//--ui-hall--
+//===========
+function Hall_Show () {
+}
+function Hall_Hide () {
+}
+function Hall_ClearRooms () {
+}
+function Hall_InsertRoomButton(roomname, click_callback) {
+	_HALL_rooms_.appendChild((function(){
+		var p = document.createElement("p");
+		var r = document.createElement("button");
+		r.appendChild(document.createTextNode(roomname));
+		r.onclick = click_callback;
+		p.appendChild(r);
+		return p;
+	})())
+}
 
+//===========
+//--ui-room--
+//===========
+function Room_Show () {
+}
+function Room_Hide () {
+}
+function Room_InsertDialog (speaker, content) {
+}
+function Room_ClearDialogs () {
+}
+function Room_InsertMember (name) {
+}
+function Room_ClearMembers () {
+}
 
 // client.js
 
@@ -60,25 +104,21 @@ function Usoclient (url, msg_callback) {
 	var client = this;
 	if (WebSocket === undefined) {
 	} else {
-		this.wsclient = new WebSocket(url);
-		this.wsclient.onmessage = function (e) {
+		client.wsclient = new WebSocket(url);
+		client.wsclient.onmessage = function (e) {
 			msg_callback(client, JSON.parse(e.data))
 		}
 	}
 }
-
 Usoclient.prototype.AddRoom = function (room_name) {
 	this.send([UsoMsg_AddRoom, room_name])
 }
-
 Usoclient.prototype.ToRoom = function (room_name, my_name) {
 	this.send([UsoMsg_ToRoom, room_name, my_name])
 }
-
 Usoclient.prototype.ExitRoom = function () {
 	this.send([UsoMsg_ExitRoom])
 }
-
 Usoclient.prototype.Say = function (dialog) {
 	this.send([UsoMsg_Say, dialog])
 }
@@ -96,41 +136,92 @@ Usoclient.prototype.send = function(message) {
 
 var Handler_seq = {};
 
-Handler_seq[HallHorn_UsoToHall] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallHorn_UsoToHall] = function (client, msg) {
+	//console.log("Handler:", msg)
+	_HALL_how_many_.innerText = msg[0];
 };
-Handler_seq[HallHorn_UsoExitHall] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallHorn_UsoExitHall] = function (client, msg) {
+	//console.log("Handler:", msg)
+	_HALL_how_many_.innerText = msg[0];
 };
-Handler_seq[HallHorn_UsoAddRoom] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallHorn_UsoAddRoom] = function (client, msg) {
+	//console.log("Handler:", msg)
+	_HALL_rooms_.appendChild((function(){
+		var p = document.createElement("p");
+		var r = document.createElement("button");
+		r.appendChild(document.createTextNode(msg[0]));
+		r.onclick = function () {
+			client.ToRoom(msg[0], _HALL_myname_.value)
+		};
+		p.appendChild(r);
+		return p;
+	})())
 };
-Handler_seq[HallHorn_DelRoom] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallHorn_DelRoom] = function (client, msg) {
+	//console.log("Handler:", msg)
 };
-Handler_seq[HallResp_Rooms] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallResp_Rooms] = function (client, msg) {
+	//console.log("Handler:", msg)
+	_HALL_rooms_.innerHTML = "";
+	_ROOM_name_.innerText = "";
+	for (var i = 0; i < msg.length; i++) {
+		_HALL_rooms_.appendChild((function(){
+			var p = document.createElement("p");
+			var r = document.createElement("button");
+			r.appendChild(document.createTextNode(msg[i]));
+			r.onclick = function () {
+				client.ToRoom(msg[0], _HALL_myname_.value)
+			};
+			p.appendChild(r);
+			return p;
+		})())
+	}
+
 };
-Handler_seq[HallResp_Error] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [HallResp_Error] = function (client, msg) {
+	//console.log("Handler:", msg)
+	alert(msg)
 };
-Handler_seq[RoomHorn_UsoToRoom] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomHorn_UsoToRoom] = function (client, msg) {
+	_ROOM_member_.appendChild((function(){
+		var m = document.createElement("p")
+		m.appendChild(document.createTextNode(msg[0]));
+		return m;
+	})())
 };
-Handler_seq[RoomHorn_UsoExitRoom] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomHorn_UsoExitRoom] = function (client, msg) {
+	_ROOM_member_.innerHTML = "";
+	for (var i = 0; i < msg.length; i++) {
+		_ROOM_member_.appendChild((function(){
+			var m = document.createElement("p")
+			m.appendChild(document.createTextNode(msg[i]));
+			return m;
+		})())
+	}
 };
-Handler_seq[RoomHorn_UsoSay] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomHorn_UsoSay] = function (client, msg) {
+	_ROOM_diapool_.appendChild((function(){
+		var d = document.createElement('p');
+		d.appendChild(document.createTextNode(msg[0]))
+		d.appendChild(document.createTextNode(' : '))
+		d.appendChild(document.createTextNode(msg[1]))
+		return d;
+	})())
 };
-Handler_seq[RoomResp_Members] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomResp_Members] = function (client, msg) {
+	_ROOM_member_.innerHTML = "";
+	for (var i = 0; i < msg.length; i++) {
+		_ROOM_member_.appendChild((function(){
+			var m = document.createElement("p")
+			m.appendChild(document.createTextNode(msg[i]));
+			return m;
+		})())
+	}
 };
-Handler_seq[RoomResp_Hist] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomResp_Hist] = function (client, msg) {
 };
-Handler_seq[RoomResp_Error] = function (client, msg) {
-	console.log("Handler:", msg)
+Handler_seq [RoomResp_Error] = function (client, msg) {
+	alert(msg)
 };
 
 function MessageHandler (client, msg) {
@@ -138,7 +229,6 @@ function MessageHandler (client, msg) {
 	var co = msg;
 	console.log("Server: ty:", ty, "co:", co);
 	var hf = Handler_seq[ty];
-	console.log("Handler:hf:", hf)
 	if (hf === undefined) {
 		console.log("Server Message Error.");
 	} else {
@@ -147,6 +237,15 @@ function MessageHandler (client, msg) {
 }
 
 var C = new Usoclient ("ws://" + document.location.host + "/uso/conn", MessageHandler);
+_HALL_newroom_comfirm_.onclick = function () {
+	C.AddRoom(_HALL_newroom_.value)
+}
+_ROOM_exit_.onclick = function () {
+	C.ExitRoom();
+}
+_ROOM_dialog_send_.onclick = function () {
+	C.Say(_ROOM_dialog_.value)
+}
 
 
 </script>

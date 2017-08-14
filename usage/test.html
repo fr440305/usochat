@@ -35,10 +35,13 @@
 //--ui-hall--
 //===========
 function Hall_Show () {
+	_HALL_.style.display = "block";
 }
 function Hall_Hide () {
+	_HALL_.style.display = "none";
 }
 function Hall_ClearRooms () {
+	_HALL_rooms_.innerHTML = "";
 }
 function Hall_InsertRoomButton(roomname, click_callback) {
 	_HALL_rooms_.appendChild((function(){
@@ -50,21 +53,40 @@ function Hall_InsertRoomButton(roomname, click_callback) {
 		return p;
 	})())
 }
+function Hall_GetUserName () {
+	return _HALL_myname_.value;
+}
 
 //===========
 //--ui-room--
 //===========
 function Room_Show () {
+	_ROOM_.style.display = "block";
 }
 function Room_Hide () {
+	_ROOM_.style.display = "none";
 }
 function Room_InsertDialog (speaker, content) {
+	_ROOM_diapool_.appendChild((function(){
+		var d = document.createElement('p');
+		d.appendChild(document.createTextNode(speaker))
+		d.appendChild(document.createTextNode(' : '))
+		d.appendChild(document.createTextNode(content))
+		return d;
+	})())
 }
 function Room_ClearDialogs () {
+	_ROOM_diapool_.innerHTML = "";
 }
 function Room_InsertMember (name) {
+	_ROOM_member_.appendChild((function(){
+		var m = document.createElement("p")
+		m.appendChild(document.createTextNode(name));
+		return m;
+	})())
 }
 function Room_ClearMembers () {
+	_ROOM_member_.innerHTML = "";
 }
 
 // client.js
@@ -146,79 +168,50 @@ Handler_seq [HallHorn_UsoExitHall] = function (client, msg) {
 };
 Handler_seq [HallHorn_UsoAddRoom] = function (client, msg) {
 	//console.log("Handler:", msg)
-	_HALL_rooms_.appendChild((function(){
-		var p = document.createElement("p");
-		var r = document.createElement("button");
-		r.appendChild(document.createTextNode(msg[0]));
-		r.onclick = function () {
-			client.ToRoom(msg[0], _HALL_myname_.value)
-		};
-		p.appendChild(r);
-		return p;
-	})())
+	Hall_InsertRoomButton(msg[0], function () {
+		client.ToRoom(msg[0], Hall_GetUserName())
+	})
 };
+
 Handler_seq [HallHorn_DelRoom] = function (client, msg) {
-	//console.log("Handler:", msg)
+	// ^ XXX
 };
 Handler_seq [HallResp_Rooms] = function (client, msg) {
-	//console.log("Handler:", msg)
-	_HALL_rooms_.innerHTML = "";
-	_ROOM_name_.innerText = "";
+	console.log("Handler HallResp_Rooms:", msg)
+	Hall_ClearRooms();
+	//Room_Hide();
 	for (var i = 0; i < msg.length; i++) {
-		_HALL_rooms_.appendChild((function(){
-			var p = document.createElement("p");
-			var r = document.createElement("button");
-			r.appendChild(document.createTextNode(msg[i]));
-			r.onclick = function () {
-				client.ToRoom(msg[0], _HALL_myname_.value)
-			};
-			p.appendChild(r);
-			return p;
-		})())
+		var room_name = msg[i];
+		Hall_InsertRoomButton(room_name, function () {
+			client.ToRoom(room_name, Hall_GetUserName())
+		})
 	}
-
 };
 Handler_seq [HallResp_Error] = function (client, msg) {
-	//console.log("Handler:", msg)
 	alert(msg)
 };
 Handler_seq [RoomHorn_UsoToRoom] = function (client, msg) {
-	_ROOM_member_.appendChild((function(){
-		var m = document.createElement("p")
-		m.appendChild(document.createTextNode(msg[0]));
-		return m;
-	})())
+	Room_InsertMember(msg[0]);
 };
 Handler_seq [RoomHorn_UsoExitRoom] = function (client, msg) {
 	_ROOM_member_.innerHTML = "";
 	for (var i = 0; i < msg.length; i++) {
-		_ROOM_member_.appendChild((function(){
-			var m = document.createElement("p")
-			m.appendChild(document.createTextNode(msg[i]));
-			return m;
-		})())
+		Room_InsertMember(msg[i]);
 	}
 };
 Handler_seq [RoomHorn_UsoSay] = function (client, msg) {
-	_ROOM_diapool_.appendChild((function(){
-		var d = document.createElement('p');
-		d.appendChild(document.createTextNode(msg[0]))
-		d.appendChild(document.createTextNode(' : '))
-		d.appendChild(document.createTextNode(msg[1]))
-		return d;
-	})())
+	Room_InsertDialog(msg[0], msg[1]);
 };
 Handler_seq [RoomResp_Members] = function (client, msg) {
 	_ROOM_member_.innerHTML = "";
 	for (var i = 0; i < msg.length; i++) {
-		_ROOM_member_.appendChild((function(){
-			var m = document.createElement("p")
-			m.appendChild(document.createTextNode(msg[i]));
-			return m;
-		})())
+		Room_InsertMember(msg[i]);
 	}
 };
 Handler_seq [RoomResp_Hist] = function (client, msg) {
+	for (var i = 0; i < msg.length; i += 2) {
+		Room_InsertDialog(msg[i], msg[i+1])
+	}
 };
 Handler_seq [RoomResp_Error] = function (client, msg) {
 	alert(msg)

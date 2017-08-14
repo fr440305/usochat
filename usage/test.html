@@ -11,8 +11,8 @@
 	<p>/ Hall /</p>
 	<span id='_HALL_how_many_'></span>
 	<div id='_HALL_rooms_'></div>
-	<p> New Room: <input id='_HALL_newroom_'> </p>
-	<p> Your Name: <input id='_HALL_myname_'> </p>
+	<p> New Room: <input id='_HALL_newroom_'></p>
+	<p> Your Name: <input id='_HALL_myname_'></p>
 	<p> <button id='_HALL_newroom_comfirm_'> Comfirm </button> </p>
 	
 </div>
@@ -56,6 +56,11 @@ function Hall_InsertRoomButton(roomname, click_callback) {
 function Hall_GetUserName () {
 	return _HALL_myname_.value;
 }
+function Hall_ApplyNewRoom () {
+	var panel = document.createElement('div');
+	panel.className = "_panel_"
+	return {RoomName: undefined, MyName: undefined};
+}
 
 //===========
 //--ui-room--
@@ -67,13 +72,13 @@ function Room_Hide () {
 	_ROOM_.style.display = "none";
 }
 function Room_InsertDialog (speaker, content) {
-	_ROOM_diapool_.appendChild((function(){
+	_ROOM_diapool_.insertBefore((function(){
 		var d = document.createElement('p');
 		d.appendChild(document.createTextNode(speaker))
 		d.appendChild(document.createTextNode(' : '))
 		d.appendChild(document.createTextNode(content))
 		return d;
-	})())
+	})(), _ROOM_diapool_.children[0])
 }
 function Room_ClearDialogs () {
 	_ROOM_diapool_.innerHTML = "";
@@ -169,25 +174,31 @@ Handler_seq [HallHorn_UsoExitHall] = function (client, msg) {
 Handler_seq [HallHorn_UsoAddRoom] = function (client, msg) {
 	//console.log("Handler:", msg)
 	Hall_InsertRoomButton(msg[0], function () {
-		client.ToRoom(msg[0], Hall_GetUserName())
+		var rn = msg[0]; // `var` can allocate a new space for the name of the room.
+		Hall_Hide();
+		Room_Show();
+		client.ToRoom(this.innerText, Hall_GetUserName())
 	})
 };
-
 Handler_seq [HallHorn_DelRoom] = function (client, msg) {
 	// ^ XXX
 };
 Handler_seq [HallResp_Rooms] = function (client, msg) {
 	console.log("Handler HallResp_Rooms:", msg)
 	Hall_ClearRooms();
-	//Room_Hide();
+	Room_Hide();
+	Hall_Show();
 	for (var i = 0; i < msg.length; i++) {
-		var room_name = msg[i];
-		Hall_InsertRoomButton(room_name, function () {
-			client.ToRoom(room_name, Hall_GetUserName())
+		Hall_InsertRoomButton(msg[i], function () {
+			Hall_Hide();
+			Room_Show();
+			client.ToRoom(this.innerText, Hall_GetUserName())
 		})
 	}
 };
 Handler_seq [HallResp_Error] = function (client, msg) {
+	Room_Hide();
+	Hall_Show();
 	alert(msg)
 };
 Handler_seq [RoomHorn_UsoToRoom] = function (client, msg) {
@@ -209,11 +220,14 @@ Handler_seq [RoomResp_Members] = function (client, msg) {
 	}
 };
 Handler_seq [RoomResp_Hist] = function (client, msg) {
+	Room_ClearDialogs();
 	for (var i = 0; i < msg.length; i += 2) {
 		Room_InsertDialog(msg[i], msg[i+1])
 	}
 };
 Handler_seq [RoomResp_Error] = function (client, msg) {
+	Hall_Hide();
+	Room_Show();
 	alert(msg)
 };
 

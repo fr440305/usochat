@@ -20,10 +20,10 @@
 
 <div id='_ROOM_'>
 	<p>/ <span id='_ROOM_name_'></span> /</p>
+	<div style='background-color:#ccc' id='_ROOM_member_'> </div>
 	<button id='_ROOM_exit_'> Exit </button>
-	<input id='_ROOM_dialog_' type='text'>
+	<input style='font-size:16px' id='_ROOM_dialog_' type='text'>
 	<button id='_ROOM_dialog_send_'>Send</button>
-	<div id='_ROOM_member_'> </div>
 	<div id='_ROOM_diapool_'> </div>
 </div>
 
@@ -251,7 +251,16 @@ _ROOM_exit_.onclick = function () {
 	C.ExitRoom();
 }
 _ROOM_dialog_send_.onclick = function () {
+	_ROOM_dialog_.value = "";
 	C.Say(_ROOM_dialog_.value)
+}
+_ROOM_dialog_.onkeydown = function (e) {
+	e = e || window.event;
+	e = e.keyCode || e.which;
+	if (e === 10 || e === 13) {
+		C.Say(_ROOM_dialog_.value);
+		_ROOM_dialog_.value = "";
+	}
 }
 
 

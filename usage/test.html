@@ -2,27 +2,53 @@
 
 <html>
 <head>
-	<meta charset='utf-8' name='viewport' content='initial-scale=1.0;'>
+	<meta charset='utf-8' name='viewport' content='initial-scale=1.0,'>
 	<title>.test</title>
+	<style>
+
+/**
+ * CSS Goes Here... 
+ * Dev By Huoyu
+ */
+
+input {
+	font-size: 16px;
+}
+
+#_HALL_rooms_  {
+	text-align: center;
+}
+#_ROOM_member_ {
+	background-color: #ccc;
+}
+
+
+
+
+
+
+
+	</style>
 </head>
 <body>
 
 <div id='_HALL_'>
-	<p>/ Hall /</p>
-	<span id='_HALL_how_many_'></span>
-	<div id='_HALL_rooms_'></div>
-	<p> New Room: <input id='_HALL_newroom_'></p>
+	<h1 style='text-align:center;'>/ Hall /</h1>
+	<p style='text-align:center;'>There are(is)
+		<b><span id='_HALL_how_many_'> </span></b>
+		people(person) online. </p>
 	<p> Your Name: <input id='_HALL_myname_'></p>
+	<div id='_HALL_rooms_'></div>
+	<p style='margin-top:500px;'> New Room: <input id='_HALL_newroom_'></p>
 	<p> <button id='_HALL_newroom_comfirm_'> Comfirm </button> </p>
 	
 </div>
-<hr />
 
 <div id='_ROOM_'>
-	<p>/ <span id='_ROOM_name_'></span> /</p>
-	<div style='background-color:#ccc' id='_ROOM_member_'> </div>
+	<h1 style='text-align:center'>/ <span id='_ROOM_name_'></span> /</h1>
+	<div id='_ROOM_member_'> </div>
 	<button id='_ROOM_exit_'> Exit </button>
-	<input style='font-size:16px' id='_ROOM_dialog_' type='text'>
+	<input id='_ROOM_dialog_' type='text'>
 	<button id='_ROOM_dialog_send_'>Send</button>
 	<div id='_ROOM_diapool_'> </div>
 </div>
@@ -65,7 +91,8 @@ function Hall_ApplyNewRoom () {
 //===========
 //--ui-room--
 //===========
-function Room_Show () {
+function Room_Show (name) {
+	_ROOM_name_.innerText = name;
 	_ROOM_.style.display = "block";
 }
 function Room_Hide () {
@@ -176,7 +203,7 @@ Handler_seq [HallHorn_UsoAddRoom] = function (client, msg) {
 	Hall_InsertRoomButton(msg[0], function () {
 		var rn = msg[0]; // `var` can allocate a new space for the name of the room.
 		Hall_Hide();
-		Room_Show();
+		Room_Show(this.innerText);
 		client.ToRoom(this.innerText, Hall_GetUserName())
 	})
 };
@@ -191,7 +218,7 @@ Handler_seq [HallResp_Rooms] = function (client, msg) {
 	for (var i = 0; i < msg.length; i++) {
 		Hall_InsertRoomButton(msg[i], function () {
 			Hall_Hide();
-			Room_Show();
+			Room_Show(this.innerText);
 			client.ToRoom(this.innerText, Hall_GetUserName())
 		})
 	}
@@ -227,7 +254,7 @@ Handler_seq [RoomResp_Hist] = function (client, msg) {
 };
 Handler_seq [RoomResp_Error] = function (client, msg) {
 	Hall_Hide();
-	Room_Show();
+	Room_Show("..error..");
 	alert(msg)
 };
 
